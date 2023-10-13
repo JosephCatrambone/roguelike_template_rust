@@ -3,7 +3,7 @@ use macroquad::prelude::*;
 use hroguelike::*;
 use std::default::Default;
 
-const TERMINAL_WIDTH: u32 = 120;
+const TERMINAL_WIDTH: u32 = 160;
 const TERMINAL_HEIGHT: u32 = 80;
 
 
@@ -29,12 +29,12 @@ async fn main() {
 	// let s: String = v.iter().collect();
 
 	let mut previous_screen_size = screen_size();
-	let mut text_buffer = String::with_capacity(120*80);
+	let mut text_buffer = String::with_capacity((TERMINAL_WIDTH*TERMINAL_HEIGHT) as usize);
 	for idx in 0..(TERMINAL_WIDTH * TERMINAL_HEIGHT) {
 		text_buffer.push_str(&((idx % 10)+1).to_string());
 	}
 
-	let mut font_settings = find_optimal_font_settings(120, 80, None);
+	let mut font_settings = find_optimal_font_settings(TERMINAL_WIDTH, TERMINAL_HEIGHT, None);
 	dbg!("{:?}", &font_settings);
 
 
