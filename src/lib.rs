@@ -4,6 +4,7 @@ mod action;
 mod camera;
 mod color;
 mod components;
+mod gamelog;
 mod input;
 mod map;
 mod raycast;
@@ -22,9 +23,8 @@ use crate::color::RGB8;
 #[derive(Resource)]
 enum GameMode {
     Paused,
-    AwaitPlayerInput,
-    BlockingModalCharacter,
-    BlockingModelString,
+	AwaitingPlayerPlayInput,
+	AwaitingPlayerInventoryInput, // TODO: Perhaps we can do something fancier later.
     WorldTick,
 }
 
@@ -50,6 +50,7 @@ impl GameState {
 		// Insert all the resources:
 		world.insert_resource::<map::Map>(map::Map::new_random(600, 500, None));
 		world.insert_resource::<GameMode>(GameMode::Paused);
+		world.insert_resource::<gamelog::GameLog>(gamelog::GameLog::default());
 		world.insert_resource::<InputState>(keymap);
 		world.insert_resource::<camera::Camera>(camera::Camera::new(300, 200, 80, 60));
 		world.insert_resource::<systems::map_rendering::RenderedMap>(systems::map_rendering::RenderedMap::default());
@@ -104,5 +105,11 @@ impl GameState {
 	pub fn input(&mut self, keys_down: &HashSet<char>) {
 		let mut inputs = self.ecs_world.get_resource_mut::<InputState>().expect("Input state was lost!");
 		inputs.update_from_keys(keys_down);
+	}
+
+	pub fn save(&self) {
+	}
+
+	pub fn load(&mut self) {
 	}
 }

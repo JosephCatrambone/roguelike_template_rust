@@ -32,7 +32,7 @@ struct FontRenderingProperties {
 #[macroquad::main("Roguelike")]
 async fn main() {
 	let mut game = GameState::new();
-	//game.set_camera_viewport_size(MAP_VIEW_WIDTH, MAP_VIEW_HEIGHT);
+	game.set_camera_viewport_size(MAP_VIEW_WIDTH, MAP_VIEW_HEIGHT);
 	/*
 	let font = load_ttf_font("./examples/DancingScriptRegular.ttf")
 		.await

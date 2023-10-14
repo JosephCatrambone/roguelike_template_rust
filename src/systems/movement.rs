@@ -22,7 +22,7 @@ pub fn step_try_move(mut query: Query<(&mut Position, &mut TryMove)>, map: Res<M
 	}
 }
 
-pub fn player_movement(mut commands: Commands, query: Query<(Entity, &Position), With<PlayerControlled>>, input_state: Res<InputState>) {
+pub fn player_movement(mut commands: Commands, query: Query<Entity, (With<Position>, With<PlayerControlled>)>, input_state: Res<InputState>) {
 	let mut dx = 0;
 	let mut dy = 0;
 	if input_state.is_action_just_pressed(Action::MoveUp) {
@@ -39,7 +39,7 @@ pub fn player_movement(mut commands: Commands, query: Query<(Entity, &Position),
 	}
 
 	if dx != 0 || dy != 0 {
-		for (e, p) in query.iter() {
+		for e in query.iter() {
 			// This may override the other trymove.
 			commands.entity(e).insert(TryMove { dx, dy, bonk: false });
 		}

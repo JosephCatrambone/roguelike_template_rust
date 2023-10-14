@@ -1,19 +1,21 @@
 use bevy_ecs::prelude::{Resource, Entity};
 use rand;
 use rand::RngCore;
+use serde::{Serialize, Deserialize};
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum TileTypes {
 	Empty,
 	Wall,
 }
 
 // Could be an entity?
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Room {
 }
 
 
-#[derive(Resource)]
+#[derive(Resource, Serialize, Deserialize)]
 pub struct Map {
 	width: u32,
 	height: u32,

@@ -1,6 +1,7 @@
 use bevy_ecs::prelude::Resource;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Default, Resource)]
+#[derive(Clone, Debug, Default, Resource, Serialize, Deserialize)]
 pub struct Camera {
 	pub center_x: u32,
 	pub center_y: u32,

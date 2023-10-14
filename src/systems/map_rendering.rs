@@ -1,14 +1,16 @@
 use crate::camera::Camera;
 use crate::components::*;
 use bevy_ecs::prelude::*;
+use serde::{Deserialize, Serialize};
 use crate::color::RGB8;
 use crate::map::{Map, TileTypes};
 
 
-#[derive(Default, Resource)]
+#[derive(Default, Resource, Serialize, Deserialize)]
 pub struct RenderedMap {
 	width: u32,
 	height: u32,
+	#[serde(skip)] // Do we want to try a special handler for this?
 	tiles: Vec<RenderedMapTile>,
 }
 
@@ -106,7 +108,7 @@ pub fn render_map(query: Query<(&Position, &Renderable)>, map: Res<Map>, camera:
 		let x = pos.x;
 		let y = pos.y;
 		if x >= left && x < right && y >= top && y < bottom {
-			let render_t: &mut RenderedMapTile = rendered_map_data.get_tile_mut(x, y);
+			let render_t: &mut RenderedMapTile = rendered_map_data.get_tile_mut(x - left, y - top);
 			render_t.code_point = render.codepoint;
 			render_t.fg_color = render.fg_color;
 			render_t.bg_color = render.bg_color;

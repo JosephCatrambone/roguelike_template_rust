@@ -1,13 +1,17 @@
 use crate::action::Action;
 use std::collections::{HashMap, HashSet};
 use bevy_ecs::prelude::Resource;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Default, PartialEq, Resource)]
+#[derive(Debug, Clone, Default, PartialEq, Resource, Serialize, Deserialize)]
 pub struct InputState {
 	keymap: HashMap<char, Action>,
 	key_lookup: HashMap<Action, char>,
+	#[serde(skip)]
 	keys_pressed: HashSet<char>,
+	#[serde(skip)]
 	keys_just_pressed: HashSet<char>,
+	#[serde(skip)]
 	keys_just_released: HashSet<char>,
 }
 
