@@ -14,7 +14,6 @@ use std::collections::HashSet;
 use crate::input::*;
 use crate::components::*;
 use bevy_ecs::prelude::*;
-use glam::UVec2;
 use crate::action::Action;
 use crate::camera::Camera;
 use crate::color::RGB8;
@@ -65,11 +64,11 @@ impl GameState {
 
 		// TODO: We are inserting the player.  Hack-ish.
 		let _player = world.spawn((
-			Position(UVec2::new(10, 10)),
+			Position { x: 10, y: 10 },
 			Player {},
 			PlayerControlled {},
 			BlocksTile {},
-			Viewshed { visible_tiles: vec![], range: 30, last_computed: Position(UVec2::new(0, 0)) },
+			Viewshed { visible_tiles: vec![], range: 30, last_computed: Position { x: 0, y: 0 } },
 			Renderable { codepoint: '@' as u32, fg_color: RGB8::new(0, 255, 128), bg_color: RGB8::new(0, 0, 0) },
 		));
 

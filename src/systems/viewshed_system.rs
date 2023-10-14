@@ -1,5 +1,4 @@
 use bevy_ecs::prelude::*;
-use glam::UVec2;
 use crate::components::*;
 use crate::map::Map;
 use crate::rect_tools::RectangleBoundsIterator;
@@ -25,7 +24,7 @@ pub fn compute_viewshed(mut query: Query<(&Position, &mut Viewshed, Option<&Play
 			'inner: for (map_x, map_y) in rc.into_iter() {
 				let open = map.tile_open(map_x as u32, map_y as u32);
 				// If this tile is not open, we've just hit it.  Add the blocking tile to the visible list, then stop iterating.
-				vs.visible_tiles.push(UVec2::new(map_x as u32, map_y as u32));
+				vs.visible_tiles.push(Position { x: map_x as u32, y: map_y as u32 });
 				if pc.is_some() {
 					// This is a player character, so we can add to the map.
 					map.set_visible_and_revealed(map_x as u32, map_y as u32);

@@ -1,5 +1,3 @@
-use glam::{IVec2, UVec2};
-
 pub struct Raycast {
 	start_x: i32,
 	start_y: i32,
@@ -53,14 +51,6 @@ impl Raycast {
 			dx: dx as f32 / step_count as f32,
 			dy: dy as f32 / step_count as f32,
 		}
-	}
-
-	pub fn from_ivec(start: IVec2, destination: IVec2) -> Self {
-		Self::new(start.x, start.y, destination.x, destination.y)
-	}
-
-	pub fn from_uvec(start: UVec2, destination: UVec2) -> Self {
-		Self::new(start.x as i32, start.y as i32, destination.x as i32, destination.y as i32)
 	}
 }
 

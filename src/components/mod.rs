@@ -1,6 +1,5 @@
 use crate::color::RGB8;
 use std::ops::{Deref, DerefMut};
-use glam::UVec2;
 use bevy_ecs::prelude::*;
 
 // If we're wrapping a single item, this lets us treat them as basically a type alias.
@@ -28,8 +27,10 @@ pub struct Player;
 pub struct PlayerControlled;
 
 #[derive(Clone, Copy, Component, Debug, PartialEq)]
-pub struct Position(pub UVec2);
-derive_derefs!(Position, UVec2);
+pub struct Position {
+	pub x: u32,
+	pub y: u32,
+}
 
 #[derive(Clone, Copy, Component, Debug, PartialEq)]
 pub struct TryMove {
@@ -64,7 +65,7 @@ derive_derefs!(Volume, f32);
 
 #[derive(Clone, Component, Debug, PartialEq)]
 pub struct Viewshed {
-	pub visible_tiles : Vec<UVec2>,
+	pub visible_tiles : Vec<Position>,
 	pub range : u32,
 	pub last_computed: Position, // If we change position we need to recompute this.
 }
