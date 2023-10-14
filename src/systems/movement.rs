@@ -1,3 +1,4 @@
+use std::sync::{Arc, Mutex};
 use crate::components::*;
 use crate::map::Map;
 use crate::input::InputState;
@@ -35,6 +36,11 @@ pub fn step_try_move(pos: &mut Position, vel: &mut TryMove, #[resource] map: &Ma
 }
 
 #[system]
-pub fn player_control(world: &mut SubWorld, query: &mut Query<(&Player, &mut TryMove)>) {
+pub fn player_movement(world: &mut SubWorld, query: &mut Query<(Entity, &PlayerControlled)>, #[resource] input_state: &Arc<Mutex<InputState>>) {
+	// TODO: It would be nice if we had a way of iterating over entities with Optional<TryMove>, getting it back as Some or None so we can add it if it's missing.
+	for (e, _pc) in query.iter(world) {
+		if let Ok(c) = &mut world.entry_mut(*e) {
 
+		}
+	}
 }

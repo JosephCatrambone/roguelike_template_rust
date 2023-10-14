@@ -4,13 +4,14 @@ use macroquad::prelude::*;
 use std::collections::HashSet;
 use std::default::Default;
 
-const TERMINAL_WIDTH: u32 = 160;
-const TERMINAL_HEIGHT: u32 = 80;
+pub const TERMINAL_WIDTH: u32 = 160;
+pub const TERMINAL_HEIGHT: u32 = 80;
 
 
 #[derive(Debug, Clone)]
 struct FontRenderingProperties {
 	optimal_font_size: f32,
+	character_width: f32,
 	scanline_height: f32,
 	horizontal_offset: f32,
 }
@@ -30,23 +31,25 @@ async fn main() {
 	// let s: String = v.iter().collect();
 
 	let mut previous_screen_size = screen_size();
-	let mut text_buffer = String::with_capacity((TERMINAL_WIDTH*TERMINAL_HEIGHT) as usize);
-	for idx in 0..(TERMINAL_WIDTH * TERMINAL_HEIGHT) {
-		text_buffer.push_str(&((idx % 10)+1).to_string());
-	}
-
 	let mut font_settings = find_optimal_font_settings(TERMINAL_WIDTH, TERMINAL_HEIGHT, None);
 	dbg!("{:?}", &font_settings);
 
-
 	loop {
 		clear_background(BLACK);
-		let mut display = "";
-		let mut rest = text_buffer.as_str();
-		for y in 0..TERMINAL_HEIGHT {
-			(display, rest) = rest.split_at(TERMINAL_WIDTH as usize);
-			draw_text(&display, font_settings.horizontal_offset, (1.0 + y as f32)*font_settings.scanline_height, font_settings.optimal_font_size, WHITE);
-		}
+		//let mut display = game.map.render_map(0, 0, TERMINAL_WIDTH, TERMINAL_HEIGHT);
+		game.with_rendered_map_data(|w, h, data|{
+			for y in 0..TERMINAL_HEIGHT.min(h) {
+				for x in 0..TERMINAL_WIDTH.min(w) {
+					let d = &data[(x + y*w) as usize];
+					let fx = (x as f32*font_settings.character_width)+font_settings.horizontal_offset;
+					let fy = (1.0 + y as f32)*font_settings.scanline_height;
+					let fs = font_settings.optimal_font_size;
+					let fc = Color::from_rgba(d.fg_color.r, d.fg_color.g, d.fg_color.b, 255);
+					draw_text(&String::from(char::from_u32(d.code_point).unwrap_or('?')), fx, fy, fs,fc);
+				}
+			}
+		});
+
 
 		// Check to see if we need to resize everything:
 		let new_screen_size = screen_size();
@@ -54,7 +57,6 @@ async fn main() {
 			font_settings = find_optimal_font_settings(TERMINAL_WIDTH, TERMINAL_HEIGHT, None);
 			previous_screen_size = new_screen_size;
 		}
-
 
 		//game.input_state.update_from_keys()
 		update_inputs(&mut game);
@@ -97,18 +99,17 @@ fn find_optimal_font_settings(terminal_width: u32, terminal_height: u32, font: O
 
 	FontRenderingProperties {
 		optimal_font_size: font_size as f32,
+		character_width: character_size.width,
 		scanline_height: character_size.height,
 		horizontal_offset: (screen_width - rendered_width) * 0.5
 	}
 }
 
 fn update_inputs(game_state: &mut GameState) {
-	let mut ih = &mut game_state.input_state;
-
 	// TODO: This is a leaky hack.
 	let mut new_keys = HashSet::new();
 	while let Some(c) = get_char_pressed() {
 		new_keys.insert(c);
 	}
-	ih.update_from_keys(&new_keys);
+	game_state.input(&new_keys);
 }

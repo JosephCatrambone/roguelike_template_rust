@@ -27,7 +27,7 @@ pub struct Player;
 pub struct PlayerControlled;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Position(UVec2);
+pub struct Position(pub UVec2);
 derive_derefs!(Position, UVec2);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -53,6 +53,9 @@ pub struct Tint {
 	pub mix: bool,
 	pub add: bool,
 }
+
+#[derive(Clone, Copy, Debug)]
+pub struct Hidden;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct Volume(f32);
