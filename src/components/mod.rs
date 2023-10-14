@@ -1,4 +1,6 @@
+mod body;
 mod items;
+pub use body::*;
 pub use items::*;
 
 use crate::color::RGB8;
@@ -7,6 +9,7 @@ use bevy_ecs::prelude::*;
 use serde::{Deserialize, Serialize};
 
 // If we're wrapping a single item, this lets us treat them as basically a type alias.
+// Example: pub struct Volume(f32); derive_derefs!(Volume, f32);
 macro_rules! derive_derefs {
 	($newtype:ident, $oldtype:ident) => {
 		impl Deref for $newtype {
@@ -23,6 +26,17 @@ macro_rules! derive_derefs {
 		}
     };
 }
+
+#[derive(Clone, Component, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Name(String);
+derive_derefs!(Name, String);
+
+impl Into<String> for Name {
+	fn into(self) -> String {
+		self.0
+	}
+}
+
 
 #[derive(Copy, Clone, Component, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Player;
@@ -63,10 +77,6 @@ pub struct Tint {
 #[derive(Clone, Copy, Component, Debug, Serialize, Deserialize)]
 pub struct Hidden;
 
-#[derive(Clone, Component, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
-pub struct Volume(f32);
-derive_derefs!(Volume, f32);
-
 #[derive(Clone, Component, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Viewshed {
 	pub visible_tiles : Vec<Position>,
@@ -75,9 +85,12 @@ pub struct Viewshed {
 }
 
 #[derive(Clone, Component, Debug, PartialEq, Serialize, Deserialize)]
-pub struct BodyPart {
-	// Should this be an entity?
+pub struct Stretchable {
+	pub base_size: f32,
+	pub current_stretch_percent: f32,
+	pub max_stretch_percent: f32
 }
+
 
 
 

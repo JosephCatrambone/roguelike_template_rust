@@ -9,17 +9,6 @@ pub const TERMINAL_HEIGHT: u32 = 80;
 pub const MAP_VIEW_WIDTH: u32 = 80;
 pub const MAP_VIEW_HEIGHT: u32 = 40;
 
-/*
-+-------+-------+
-|.......|.......|
-|.......|.......|
-+-------+-------+
-|...............|
-|...............|
-+---------------+
-*/
-
-
 #[derive(Debug, Clone)]
 struct FontRenderingProperties {
 	optimal_font_size: f32,
@@ -33,18 +22,20 @@ struct FontRenderingProperties {
 async fn main() {
 	let mut game = GameState::new();
 	game.set_camera_viewport_size(MAP_VIEW_WIDTH, MAP_VIEW_HEIGHT);
-	/*
-	let font = load_ttf_font("./examples/DancingScriptRegular.ttf")
-		.await
-		.unwrap();
-	*/
+	//let font = load_ttf_font("./examples/DancingScriptRegular.ttf").await.unwrap();
 
 	let mut previous_screen_size = screen_size();
 	let mut font_settings = find_optimal_font_settings(TERMINAL_WIDTH, TERMINAL_HEIGHT, None);
-	dbg!("{:?}", &font_settings);
 
 	loop {
+		// Update:
+		update_inputs(&mut game);
+		game.update();
+
+		// Redraw:
 		clear_background(BLACK);
+
+		// Check for display changes:
 		//let mut display = game.map.render_map(0, 0, TERMINAL_WIDTH, TERMINAL_HEIGHT);
 		game.with_rendered_map_data(|data|{
 			for y in 0..data.get_height() {
@@ -63,17 +54,12 @@ async fn main() {
 			}
 		});
 
-
 		// Check to see if we need to resize everything:
 		let new_screen_size = screen_size();
 		if new_screen_size != previous_screen_size {
 			font_settings = find_optimal_font_settings(TERMINAL_WIDTH, TERMINAL_HEIGHT, None);
 			previous_screen_size = new_screen_size;
 		}
-
-		//game.input_state.update_from_keys()
-		update_inputs(&mut game);
-		game.update();
 
 		next_frame().await
 	}

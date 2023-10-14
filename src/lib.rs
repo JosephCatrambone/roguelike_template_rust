@@ -53,15 +53,15 @@ impl GameState {
 		world.insert_resource::<gamelog::GameLog>(gamelog::GameLog::default());
 		world.insert_resource::<InputState>(keymap);
 		world.insert_resource::<camera::Camera>(camera::Camera::new(300, 200, 80, 60));
-		world.insert_resource::<systems::map_rendering::RenderedMap>(systems::map_rendering::RenderedMap::default());
+		world.insert_resource::<systems::RenderedMap>(systems::RenderedMap::default());
 
 		// Set the run order for our systems:
 		let mut schedule = Schedule::default();
-		schedule.add_systems(systems::movement::step_try_move);
-		schedule.add_systems(systems::movement::player_movement);
-		schedule.add_systems(systems::viewshed_system::compute_viewshed);
-		schedule.add_systems(systems::map_rendering::render_map);
-		schedule.add_systems(systems::camera_follow::camera_follow);
+		schedule.add_systems(systems::step_try_move);
+		schedule.add_systems(systems::player_movement);
+		schedule.add_systems(systems::compute_viewshed);
+		schedule.add_systems(systems::render_map);
+		schedule.add_systems(systems::camera_follow);
 
 		// TODO: We are inserting the player.  Hack-ish.
 		let _player = world.spawn((
@@ -87,13 +87,13 @@ impl GameState {
 			camera.height = height;
 		}
 		{
-			let mut map_data = self.ecs_world.get_resource_mut::<systems::map_rendering::RenderedMap>().expect("Couldn't get map data ref.");
+			let mut map_data = self.ecs_world.get_resource_mut::<systems::RenderedMap>().expect("Couldn't get map data ref.");
 			map_data.reallocate(width, height);
 		}
 	}
 
-	pub fn with_rendered_map_data(&self, render_fn: impl Fn(&systems::map_rendering::RenderedMap) -> ()) {
-		let map_data = self.ecs_world.get_resource::<systems::map_rendering::RenderedMap>().unwrap();
+	pub fn with_rendered_map_data(&self, render_fn: impl Fn(&systems::RenderedMap) -> ()) {
+		let map_data = self.ecs_world.get_resource::<systems::RenderedMap>().unwrap();
 		render_fn(&map_data);
 	}
 
