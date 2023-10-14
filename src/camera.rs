@@ -1,5 +1,6 @@
+use bevy_ecs::prelude::Resource;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default, Resource)]
 pub struct Camera {
 	pub center_x: u32,
 	pub center_y: u32,

@@ -1,4 +1,4 @@
-use legion::{Entity};
+use bevy_ecs::prelude::{Resource, Entity};
 use rand;
 use rand::RngCore;
 
@@ -13,6 +13,7 @@ pub struct Room {
 }
 
 
+#[derive(Resource)]
 pub struct Map {
 	pub width: u32,
 	pub height: u32,

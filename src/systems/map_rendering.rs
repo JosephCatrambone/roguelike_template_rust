@@ -1,8 +1,16 @@
 use crate::camera::Camera;
 use crate::components::*;
-use legion::{Entity, Query, system, World, world::SubWorld};
+use bevy_ecs::prelude::*;
 use crate::color::RGB8;
 use crate::map::{Map, TileTypes};
+
+
+#[derive(Default, Resource)]
+pub struct RenderedMap {
+	pub width: u32,
+	pub height: u32,
+	pub tiles: Vec<RenderedMapTile>,
+}
 
 pub struct RenderedMapTile {
 	pub code_point: u32,
@@ -20,21 +28,22 @@ impl RenderedMapTile {
 	}
 }
 
-#[system]
-pub fn render_map(world: &mut SubWorld, query: &mut Query<(&Entity, &Position, &Renderable)>, #[resource] map: &Map, #[resource] camera: &Camera, #[resource] rendered_map_data: &mut Vec<RenderedMapTile>) {
+pub fn render_map(query: Query<(&Position, &Renderable)>, map: Res<Map>, camera: Res<Camera>, mut rendered_map_data: ResMut<RenderedMap>) {
 	let (left, top, right, bottom) = camera.get_frustum();
 	let f_width = right - left;
 	let f_height = bottom - top;
 
 	// Clear OR pre-fill:
-	if rendered_map_data.len() != (f_width*f_height) as usize {
+	if rendered_map_data.tiles.len() != (f_width*f_height) as usize || rendered_map_data.width != f_width || rendered_map_data.height != f_height {
 		// There was a camera resize.  Reallocate.
-		rendered_map_data.clear();
+		rendered_map_data.tiles.clear();
 		for _ in 0..(f_width*f_height) {
-			rendered_map_data.push(RenderedMapTile::new(' ' as u32, RGB8::new(0, 0, 0), RGB8::new(0, 0, 0)));
+			rendered_map_data.tiles.push(RenderedMapTile::new(' ' as u32, RGB8::new(0, 0, 0), RGB8::new(0, 0, 0)));
 		}
+		rendered_map_data.width = f_width;
+		rendered_map_data.height = f_height;
 	}
-	rendered_map_data.iter_mut().for_each(|t| {
+	rendered_map_data.tiles.iter_mut().for_each(|t| {
 		t.code_point = ' ' as u32;
 		t.fg_color = RGB8 { r: 0, g: 0, b: 0 };
 		t.bg_color = t.fg_color; // TODO: Make sure this isn't messing with coloration.
@@ -45,7 +54,7 @@ pub fn render_map(world: &mut SubWorld, query: &mut Query<(&Entity, &Position, &
 			if x > map.width || y > map.height { continue; }
 			let map_idx = map.xy_idx(x, y);
 			let render_idx = (x-left) + ((y-top)*f_width);
-			let render_t: &mut RenderedMapTile = rendered_map_data.get_mut(render_idx as usize).unwrap();
+			let render_t: &mut RenderedMapTile = rendered_map_data.tiles.get_mut(render_idx as usize).unwrap();
 
 			//if map.tile_open(x, y) { // We can render the tile and check what's in here OR we could iterate all the entities separately.
 			render_t.code_point = match map.tiles[map_idx] {

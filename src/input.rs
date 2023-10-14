@@ -1,7 +1,8 @@
 use crate::action::Action;
 use std::collections::{HashMap, HashSet};
+use bevy_ecs::prelude::Resource;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq, Resource)]
 pub struct InputState {
 	keymap: HashMap<char, Action>,
 	key_lookup: HashMap<Action, char>,
