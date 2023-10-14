@@ -78,9 +78,22 @@ impl GameState {
 		}
 	}
 
-	pub fn with_rendered_map_data(&self, render_fn: impl Fn(u32, u32, &Vec<systems::map_rendering::RenderedMapTile>) -> ()) {
+	// Sets the view frustum of the data block for map rendering and the camera frustum.
+	pub fn set_camera_viewport_size(&mut self, width: u32, height: u32) {
+		{
+			let mut camera = self.ecs_world.get_resource_mut::<camera::Camera>().expect("Couldn't get camera ref.");
+			camera.width = width;
+			camera.height = height;
+		}
+		{
+			let mut map_data = self.ecs_world.get_resource_mut::<systems::map_rendering::RenderedMap>().expect("Couldn't get map data ref.");
+			map_data.reallocate(width, height);
+		}
+	}
+
+	pub fn with_rendered_map_data(&self, render_fn: impl Fn(&systems::map_rendering::RenderedMap) -> ()) {
 		let map_data = self.ecs_world.get_resource::<systems::map_rendering::RenderedMap>().unwrap();
-		render_fn(map_data.width, map_data.height, &map_data.tiles);
+		render_fn(&map_data);
 	}
 
 	pub fn update(&mut self) {
@@ -92,41 +105,4 @@ impl GameState {
 		let mut inputs = self.ecs_world.get_resource_mut::<InputState>().expect("Input state was lost!");
 		inputs.update_from_keys(keys_down);
 	}
-
-	/*
-	fn handle_input(&mut self) {
-		let mut maybe_player_entities = vec![];
-		{
-			let mut player_controlled = <(Entity, &PlayerControlled)>::query();
-			for (entity, _player) in player_controlled.iter(&self.ecs_world) {
-				maybe_player_entities.push(entity.clone());
-			}
-		}
-
-		// Movement?
-		let mut dx = 0;
-		let mut dy = 0;
-		if self.input_state.is_action_just_pressed(input::KeyAction("move_up".to_string())) {
-			dy -= 1;
-		}
-		if self.input_state.is_action_just_pressed(input::KeyAction("move_down".to_string())) {
-		}
-
-		for entity in maybe_player_entities {
-			if let Some(mut entry) = self.ecs_world.entry(entity) {
-				if let Ok(trymove) = entry.get_component_mut::<TryMove>() {
-					trymove.dx = dx;
-					trymove.dy = dy;
-				} else {
-					let trymove = TryMove {
-						dx,
-						dy,
-						bonk: false,
-					};
-					entry.add_component(trymove);
-				};
-			}
-		}
-	}
-	*/
 }

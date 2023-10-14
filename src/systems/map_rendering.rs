@@ -7,9 +7,46 @@ use crate::map::{Map, TileTypes};
 
 #[derive(Default, Resource)]
 pub struct RenderedMap {
-	pub width: u32,
-	pub height: u32,
-	pub tiles: Vec<RenderedMapTile>,
+	width: u32,
+	height: u32,
+	tiles: Vec<RenderedMapTile>,
+}
+
+impl RenderedMap {
+	pub fn reallocate(&mut self, new_width: u32, new_height: u32) {
+		self.tiles.clear();
+		for _ in 0..(new_width*new_height) {
+			self.tiles.push(RenderedMapTile::new(' ' as u32, RGB8::new(0, 0, 0), RGB8::new(0, 0, 0)));
+		}
+		self.width = new_width;
+		self.height = new_height;
+	}
+
+	pub fn clear(&mut self) {
+		self.tiles.iter_mut().for_each(|t| {
+			t.code_point = ' ' as u32;
+			t.fg_color = RGB8 { r: 0, g: 0, b: 0 };
+			t.bg_color = t.fg_color; // TODO: Make sure this isn't messing with coloration.
+		});
+	}
+
+	pub fn get_tile(&self, x: u32, y: u32) -> &RenderedMapTile {
+		let render_idx = (x + y*self.width) as usize;
+		self.tiles.get(render_idx).unwrap()
+	}
+
+	pub fn get_tile_mut(&mut self, x: u32, y: u32) -> &mut RenderedMapTile {
+		let render_idx = (x + y*self.width) as usize;
+		self.tiles.get_mut(render_idx).unwrap()
+	}
+
+	pub fn get_width(&self) -> u32 {
+		self.width
+	}
+
+	pub fn get_height(&self) -> u32 {
+		self.height
+	}
 }
 
 pub struct RenderedMapTile {
@@ -30,30 +67,16 @@ impl RenderedMapTile {
 
 pub fn render_map(query: Query<(&Position, &Renderable)>, map: Res<Map>, camera: Res<Camera>, mut rendered_map_data: ResMut<RenderedMap>) {
 	let (left, top, right, bottom) = camera.get_frustum();
-	let f_width = right - left;
-	let f_height = bottom - top;
 
-	// Clear OR pre-fill:
-	if rendered_map_data.tiles.len() != (f_width*f_height) as usize || rendered_map_data.width != f_width || rendered_map_data.height != f_height {
-		// There was a camera resize.  Reallocate.
-		rendered_map_data.tiles.clear();
-		for _ in 0..(f_width*f_height) {
-			rendered_map_data.tiles.push(RenderedMapTile::new(' ' as u32, RGB8::new(0, 0, 0), RGB8::new(0, 0, 0)));
-		}
-		rendered_map_data.width = f_width;
-		rendered_map_data.height = f_height;
+	if camera.width != rendered_map_data.width || camera.height != rendered_map_data.height {
+		rendered_map_data.reallocate(camera.width, camera.height);
 	}
-	rendered_map_data.tiles.iter_mut().for_each(|t| {
-		t.code_point = ' ' as u32;
-		t.fg_color = RGB8 { r: 0, g: 0, b: 0 };
-		t.bg_color = t.fg_color; // TODO: Make sure this isn't messing with coloration.
-	});
+	rendered_map_data.clear();
 
 	for y in top..bottom {
 		for x in left..right {
 			if x > map.get_width() || y > map.get_height() { continue; }
-			let render_idx = (x-left) + ((y-top)*f_width);
-			let render_t: &mut RenderedMapTile = rendered_map_data.tiles.get_mut(render_idx as usize).unwrap();
+			let render_t: &mut RenderedMapTile = rendered_map_data.get_tile_mut(x - left, y - top);
 
 			let visible = map.is_visible(x, y);
 			let revealed = map.is_revealed(x, y);
@@ -83,8 +106,7 @@ pub fn render_map(query: Query<(&Position, &Renderable)>, map: Res<Map>, camera:
 		let x = pos.x;
 		let y = pos.y;
 		if x >= left && x < right && y >= top && y < bottom {
-			let render_idx = (x-left) + ((y-top)*f_width);
-			let render_t: &mut RenderedMapTile = rendered_map_data.tiles.get_mut(render_idx as usize).unwrap();
+			let render_t: &mut RenderedMapTile = rendered_map_data.get_tile_mut(x, y);
 			render_t.code_point = render.codepoint;
 			render_t.fg_color = render.fg_color;
 			render_t.bg_color = render.bg_color;

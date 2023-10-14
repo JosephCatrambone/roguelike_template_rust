@@ -6,6 +6,18 @@ use std::default::Default;
 
 pub const TERMINAL_WIDTH: u32 = 160;
 pub const TERMINAL_HEIGHT: u32 = 80;
+pub const MAP_VIEW_WIDTH: u32 = 80;
+pub const MAP_VIEW_HEIGHT: u32 = 40;
+
+/*
++-------+-------+
+|.......|.......|
+|.......|.......|
++-------+-------+
+|...............|
+|...............|
++---------------+
+*/
 
 
 #[derive(Debug, Clone)]
@@ -20,15 +32,12 @@ struct FontRenderingProperties {
 #[macroquad::main("Roguelike")]
 async fn main() {
 	let mut game = GameState::new();
+	//game.set_camera_viewport_size(MAP_VIEW_WIDTH, MAP_VIEW_HEIGHT);
 	/*
 	let font = load_ttf_font("./examples/DancingScriptRegular.ttf")
 		.await
 		.unwrap();
 	*/
-
-	//let s: String = v.into_iter().collect();
-	// This will preserve a character buffer:
-	// let s: String = v.iter().collect();
 
 	let mut previous_screen_size = screen_size();
 	let mut font_settings = find_optimal_font_settings(TERMINAL_WIDTH, TERMINAL_HEIGHT, None);
@@ -37,14 +46,18 @@ async fn main() {
 	loop {
 		clear_background(BLACK);
 		//let mut display = game.map.render_map(0, 0, TERMINAL_WIDTH, TERMINAL_HEIGHT);
-		game.with_rendered_map_data(|w, h, data|{
-			for y in 0..TERMINAL_HEIGHT.min(h) {
-				for x in 0..TERMINAL_WIDTH.min(w) {
-					let d = &data[(x + y*w) as usize];
+		game.with_rendered_map_data(|data|{
+			for y in 0..data.get_height() {
+				for x in 0..data.get_width() {
+					let d = &data.get_tile(x, y);
 					let fx = (x as f32*font_settings.character_width)+font_settings.horizontal_offset;
 					let fy = (1.0 + y as f32)*font_settings.scanline_height;
 					let fs = font_settings.optimal_font_size;
 					let fc = Color::from_rgba(d.fg_color.r, d.fg_color.g, d.fg_color.b, 255);
+					let fbg = Color::from_rgba(d.bg_color.r, d.bg_color.g, d.bg_color.b, 255);
+					if fbg != BLACK {
+						draw_rectangle(fx, fy, font_settings.character_width, font_settings.scanline_height, fbg);
+					}
 					draw_text(&String::from(char::from_u32(d.code_point).unwrap_or('?')), fx, fy, fs,fc);
 				}
 			}
