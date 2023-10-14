@@ -65,7 +65,7 @@ derive_derefs!(Volume, f32);
 #[derive(Clone, Component, Debug, PartialEq)]
 pub struct Viewshed {
 	pub visible_tiles : Vec<UVec2>,
-	pub range : i32,
+	pub range : u32,
 	pub last_computed: Position, // If we change position we need to recompute this.
 }
 

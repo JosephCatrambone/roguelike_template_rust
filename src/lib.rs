@@ -7,6 +7,7 @@ mod components;
 mod input;
 mod map;
 mod raycast;
+mod rect_tools;
 mod systems;
 
 use std::collections::HashSet;
