@@ -15,13 +15,13 @@ pub struct Room {
 
 #[derive(Resource)]
 pub struct Map {
-	pub width: u32,
-	pub height: u32,
-	pub tiles: Vec<TileTypes>,
-	pub tile_contents: Vec<Vec<Entity>>,
-	pub visible_tiles: Vec<bool>, // Visible to player.
-	pub revealed_tiles: Vec<bool>,
-	pub rooms: Vec<Room>,
+	width: u32,
+	height: u32,
+	tiles: Vec<TileTypes>,
+	tile_contents: Vec<Vec<Entity>>,
+	visible_tiles: Vec<bool>, // Visible to player.
+	revealed_tiles: Vec<bool>,
+	rooms: Vec<Room>,
 }
 
 impl Map {
@@ -86,12 +86,59 @@ impl Map {
 		map
 	}
 
+	pub fn get_width(&self) -> u32 {
+		self.width
+	}
+
+	pub fn get_height(&self) -> u32 {
+		self.height
+	}
+
+	pub fn is_visible(&self, x: u32, y: u32) -> bool {
+		let idx = self.xy_idx(x, y);
+		self.visible_tiles[idx]
+	}
+
+	pub fn is_revealed(&self, x: u32, y: u32) -> bool {
+		let idx = self.xy_idx(x, y);
+		self.revealed_tiles[idx]
+	}
+
+	pub fn get_tile_type(&self, x: u32, y: u32) -> TileTypes {
+		let idx = self.xy_idx(x, y);
+		self.tiles[idx]
+	}
+
 	pub fn tile_open(&self, x: u32, y: u32) -> bool {
 		let idx = self.xy_idx(x, y);
 		if idx > self.tiles.len() {
 			return false;
 		}
 		return self.tiles[idx] == TileTypes::Empty;
+	}
+
+	pub fn clear_revealed(&mut self) {
+		for t in self.revealed_tiles.iter_mut() {
+			*t = false;
+		}
+	}
+
+	pub fn clear_visible(&mut self) {
+		for t in self.visible_tiles.iter_mut() {
+			*t = false;
+		}
+	}
+
+	// Also sets revealed.
+	pub fn set_visible_and_revealed(&mut self, x: u32, y: u32) {
+		let idx = self.xy_idx(x, y);
+		self.visible_tiles[idx] = true;
+		self.revealed_tiles[idx] = true;
+	}
+
+	pub fn unset_visible(&mut self, x: u32, y: u32) {
+		let idx = self.xy_idx(x, y);
+		self.visible_tiles[idx] = false;
 	}
 }
 

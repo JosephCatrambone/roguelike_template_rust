@@ -51,19 +51,29 @@ pub fn render_map(query: Query<(&Position, &Renderable)>, map: Res<Map>, camera:
 
 	for y in top..bottom {
 		for x in left..right {
-			if x > map.width || y > map.height { continue; }
-			let map_idx = map.xy_idx(x, y);
+			if x > map.get_width() || y > map.get_height() { continue; }
 			let render_idx = (x-left) + ((y-top)*f_width);
 			let render_t: &mut RenderedMapTile = rendered_map_data.tiles.get_mut(render_idx as usize).unwrap();
 
-			//if map.tile_open(x, y) { // We can render the tile and check what's in here OR we could iterate all the entities separately.
-			render_t.code_point = match map.tiles[map_idx] {
-				TileTypes::Wall => '#' as u32,
-				TileTypes::Empty => '.' as u32,
-			};
-			render_t.fg_color.r = 255;
-			render_t.fg_color.g = 255;
-			render_t.fg_color.b = 255;
+			let visible = map.is_visible(x, y);
+			let revealed = map.is_revealed(x, y);
+
+			if visible || revealed {
+				//if map.tile_open(x, y) { // We can render the tile and check what's in here OR we could iterate all the entities separately.
+				render_t.code_point = match map.get_tile_type(x, y) {
+					TileTypes::Wall => '#' as u32,
+					TileTypes::Empty => '.' as u32,
+				};
+				if visible {
+					render_t.fg_color.r = 255;
+					render_t.fg_color.g = 255;
+					render_t.fg_color.b = 255;
+				} else { // Only revealed.
+					render_t.fg_color.r = 128;
+					render_t.fg_color.g = 128;
+					render_t.fg_color.b = 128;
+				}
+			}
 		}
 	}
 
