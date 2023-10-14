@@ -1,7 +1,8 @@
 use crate::color::RGB8;
 use std::ops::{Deref, DerefMut};
-use glam::{IVec2, UVec2};
+use glam::UVec2;
 
+// If we're wrapping a single item, this lets us treat them as basically a type alias.
 macro_rules! derive_derefs {
 	($newtype:ident, $oldtype:ident) => {
 		impl Deref for $newtype {
@@ -19,22 +20,25 @@ macro_rules! derive_derefs {
     };
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Player;
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct PlayerControlled;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Position(UVec2);
 derive_derefs!(Position, UVec2);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Velocity(IVec2);
-derive_derefs!(Velocity, IVec2);
+pub struct TryMove {
+	pub dx: i32, // Will get reset to zero after the move attempt.
+	pub dy: i32,
+	pub bonk: bool, // True if the last move attempt failed.
+}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct TryMove {
-	pub dx: i32,
-	pub dy: i32,
-	pub bonk: bool,
-}
+pub struct BlocksTile; // Cannot overlap with anything that has this component.
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Renderable {
@@ -50,13 +54,19 @@ pub struct Tint {
 	pub add: bool,
 }
 
-#[derive(Debug)]
-pub struct Volume {
-}
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
+pub struct Volume(f32);
+derive_derefs!(Volume, f32);
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Viewshed {
 	pub visible_tiles : Vec<UVec2>,
 	pub range : i32,
-	pub dirty: bool,
+	pub last_computed: Position, // If we change position we need to recompute this.
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct BodyPart {
+	// Should this be an entity?
+
 }

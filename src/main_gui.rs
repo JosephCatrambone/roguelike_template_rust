@@ -1,6 +1,7 @@
+use hroguelike::*;
 use macroquad::miniquad::window::screen_size;
 use macroquad::prelude::*;
-use hroguelike::*;
+use std::collections::HashSet;
 use std::default::Default;
 
 const TERMINAL_WIDTH: u32 = 160;
@@ -47,11 +48,6 @@ async fn main() {
 			draw_text(&display, font_settings.horizontal_offset, (1.0 + y as f32)*font_settings.scanline_height, font_settings.optimal_font_size, WHITE);
 		}
 
-		//draw_line(40.0, 40.0, 100.0, 200.0, 15.0, BLUE);
-		//draw_rectangle(screen_width() / 2.0 - 60.0, 100.0, 120.0, 60.0, GREEN);
-		//draw_circle(screen_width() - 30.0, screen_height() - 30.0, 15.0, YELLOW);
-		//draw_text("HELLO", 20.0, 20.0, 20.0, DARKGRAY);
-
 		// Check to see if we need to resize everything:
 		let new_screen_size = screen_size();
 		if new_screen_size != previous_screen_size {
@@ -59,6 +55,9 @@ async fn main() {
 			previous_screen_size = new_screen_size;
 		}
 
+
+		//game.input_state.update_from_keys()
+		update_inputs(&mut game);
 		game.update();
 
 		next_frame().await
@@ -101,4 +100,15 @@ fn find_optimal_font_settings(terminal_width: u32, terminal_height: u32, font: O
 		scanline_height: character_size.height,
 		horizontal_offset: (screen_width - rendered_width) * 0.5
 	}
+}
+
+fn update_inputs(game_state: &mut GameState) {
+	let mut ih = &mut game_state.input_state;
+
+	// TODO: This is a leaky hack.
+	let mut new_keys = HashSet::new();
+	while let Some(c) = get_char_pressed() {
+		new_keys.insert(c);
+	}
+	ih.update_from_keys(&new_keys);
 }

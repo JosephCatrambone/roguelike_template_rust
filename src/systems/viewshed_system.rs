@@ -8,7 +8,7 @@ use crate::map::Map;
 pub fn compute_viewshed(world: &mut SubWorld, query: &mut Query<(&Position, &mut Viewshed)>, #[resource] map: &Map) {
 	for (pos, view) in query.iter_mut(world) {
 		//println!("{} {}", a, b);
-		if !view.dirty {
+		if &view.last_computed == pos {
 			continue;
 		}
 

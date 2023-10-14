@@ -1,5 +1,6 @@
 use legion::Entity;
 
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum TileTypes {
 	Empty,
 	Wall,
@@ -26,9 +27,9 @@ impl Map {
 	}
 
 	pub fn idx_xy(&self, idx: usize) -> (u32, u32) {
-		let x = idx % self.width;
-		let y = idx / self.width;
-		(x as u32, y as u32)
+		let x = idx as u32 % self.width;
+		let y = idx as u32 / self.width;
+		(x, y)
 	}
 
 	pub fn new() -> Self {

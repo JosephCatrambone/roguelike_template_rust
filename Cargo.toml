@@ -10,14 +10,17 @@ name = "maingame"
 path = "src/main_gui.rs"
 
 [dependencies]
-macroquad="~0.4.4"
-glam = "~0.24.2"
+macroquad="~0.4"
+glam = "~0.24"
 #specs = { version = "~0.20.0", features = ["specs-derive"] }
+num = "~0.4"
+num-derive = "~0.4"
+num-traits = "~0.2"
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-legion = { version = "~0.4.0", features = [] }
+legion = { version = "~0.4", features = [] }
 [target.'cfg(target_family = "wasm")'.dependencies]
-legion = { version = "~0.4.0", default-features = false, features = ["wasm-bindgen"] }
+legion = { version = "~0.4", default-features = false, features = ["wasm-bindgen"] }
 
 # rustup target install wasm32-unknown-unknown
 # cargo install wasm-server-runner
