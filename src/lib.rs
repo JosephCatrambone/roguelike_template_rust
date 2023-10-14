@@ -61,6 +61,7 @@ impl GameState {
 		schedule.add_systems(systems::movement::player_movement);
 		schedule.add_systems(systems::viewshed_system::compute_viewshed);
 		schedule.add_systems(systems::map_rendering::render_map);
+		schedule.add_systems(systems::camera_follow::camera_follow);
 
 		// TODO: We are inserting the player.  Hack-ish.
 		let _player = world.spawn((
@@ -68,7 +69,7 @@ impl GameState {
 			Player {},
 			PlayerControlled {},
 			BlocksTile {},
-			Renderable { codepoint: '@', fg_color: RGB8::new(0, 255, 128), bg_color: RGB8::new(0, 0, 0) },
+			Renderable { codepoint: '@' as u32, fg_color: RGB8::new(0, 255, 128), bg_color: RGB8::new(0, 0, 0) },
 		));
 
 		GameState {

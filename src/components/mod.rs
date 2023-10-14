@@ -43,7 +43,7 @@ pub struct BlocksTile; // Cannot overlap with anything that has this component.
 
 #[derive(Clone, Copy, Component, Debug, PartialEq)]
 pub struct Renderable {
-	pub codepoint: char,
+	pub codepoint: u32,
 	pub fg_color: RGB8,
 	pub bg_color: RGB8,
 }

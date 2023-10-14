@@ -68,5 +68,16 @@ pub fn render_map(query: Query<(&Position, &Renderable)>, map: Res<Map>, camera:
 	}
 
 	// The tilemap has all the entities in a given slot.  We could/should reuse that?
-
+	// TODO: Option<Hidden>
+	for (pos, render) in query.iter() {
+		let x = pos.x;
+		let y = pos.y;
+		if x >= left && x < right && y >= top && y < bottom {
+			let render_idx = (x-left) + ((y-top)*f_width);
+			let render_t: &mut RenderedMapTile = rendered_map_data.tiles.get_mut(render_idx as usize).unwrap();
+			render_t.code_point = render.codepoint;
+			render_t.fg_color = render.fg_color;
+			render_t.bg_color = render.bg_color;
+		}
+	}
 }
