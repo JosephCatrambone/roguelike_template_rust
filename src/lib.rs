@@ -28,7 +28,7 @@ pub enum GameMode {
 }
 
 pub struct GameState {
-	ecs_world: World,
+	world: World,
 	update_schedule: Schedule,
 	redraw_schedule: Schedule, // Perhaps we can do these using the system 'run if'?
 	// Map is in resources.
@@ -58,12 +58,12 @@ impl GameState {
 		let mut update_schedule = Schedule::default();
 		update_schedule.add_systems((
 				systems::step_try_move,
-				systems::compute_viewshed,
-				systems::camera_follow
+				systems::camera_follow,
 			) //.run_if(step_world),
 		);
 		
 		let mut redraw_schedule = Schedule::default();
+		redraw_schedule.add_systems(systems::compute_viewshed);
 		redraw_schedule.add_systems(systems::render_map);
 
 		// TODO: We are inserting the player.  Hack-ish.
@@ -77,9 +77,9 @@ impl GameState {
 		));
 
 		GameState {
-			ecs_world: world,
-			update_schedule: update_schedule,
-			redraw_schedule: redraw_schedule,
+			world,
+			update_schedule,
+			redraw_schedule,
 			input_state: keymap
 		}
 	}
@@ -87,24 +87,24 @@ impl GameState {
 	// Sets the view frustum of the data block for map rendering and the camera frustum.
 	pub fn set_camera_viewport_size(&mut self, width: u32, height: u32) {
 		{
-			let mut camera = self.ecs_world.get_resource_mut::<camera::Camera>().expect("Couldn't get camera ref.");
+			let mut camera = self.world.get_resource_mut::<camera::Camera>().expect("Couldn't get camera ref.");
 			camera.width = width;
 			camera.height = height;
 		}
 		{
-			let mut map_data = self.ecs_world.get_resource_mut::<systems::RenderedMap>().expect("Couldn't get map data ref.");
+			let mut map_data = self.world.get_resource_mut::<systems::RenderedMap>().expect("Couldn't get map data ref.");
 			map_data.reallocate(width, height);
 		}
 	}
 
 	pub fn with_rendered_map_data(&self, render_fn: impl Fn(&systems::RenderedMap) -> ()) {
-		let map_data = self.ecs_world.get_resource::<systems::RenderedMap>().unwrap();
+		let map_data = self.world.get_resource::<systems::RenderedMap>().unwrap();
 		render_fn(&map_data);
 	}
 
 	pub fn update(&mut self) {
 		let current_game_mode = {
-			self.ecs_world.get_resource::<GameMode>().expect("GameMode resource detached!? This can never happen.").clone()
+			self.world.get_resource::<GameMode>().expect("GameMode resource detached!? This can never happen.").clone()
 		};
 		let next_game_mode = match current_game_mode {
 			GameMode::Paused => {
@@ -117,13 +117,13 @@ impl GameState {
 				GameMode::Paused // TODO
 			},
 			GameMode::WorldTick => {
-				self.update_schedule.run(&mut self.ecs_world); // We have to step the world so that the inputs will be registered.
+				self.update_schedule.run(&mut self.world); // We have to step the world so that the inputs will be registered.
 				GameMode::AwaitingPlayerAction
 			}
 		};
 		//self.ecs_world.get_resource::<GameMode>().expect("GameMode resource detached!? This can never happen.").as_ref()
-		*(self.ecs_world.get_resource_mut::<GameMode>().expect("Failed to get game mode!?").as_mut()) = next_game_mode;
-		self.redraw_schedule.run(&mut self.ecs_world);
+		*(self.world.get_resource_mut::<GameMode>().expect("Failed to get game mode!?").as_mut()) = next_game_mode;
+		self.redraw_schedule.run(&mut self.world);
 	}
 
 	pub fn save(&self) {
@@ -147,8 +147,8 @@ impl GameState {
 			return GameMode::AwaitingPlayerAction;
 		}
 		// TODO: Use 'with' here to speed up the select.
-		let mut system_state: SystemState<(Commands, Query<(Entity, Option<&mut TryMove>, &Position, &PlayerControlled)>)> = SystemState::new(&mut self.ecs_world);
-		let (mut commands, mut query) = system_state.get_mut(&mut self.ecs_world);
+		let mut system_state: SystemState<(Commands, Query<(Entity, Option<&mut TryMove>, &Position, &PlayerControlled)>)> = SystemState::new(&mut self.world);
+		let (mut commands, mut query) = system_state.get_mut(&mut self.world);
 		for a in actions {
 			match a {
 				Action::Move(dx, dy) => {
@@ -166,7 +166,7 @@ impl GameState {
 				},
 			}
 		}
-		system_state.apply(&mut self.ecs_world);
+		system_state.apply(&mut self.world);
 		return GameMode::WorldTick;
 	}
 }
