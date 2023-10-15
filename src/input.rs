@@ -68,9 +68,10 @@ impl InputState {
 		!self.keys_just_pressed.is_empty()
 	}
 
-	pub fn clear_press_states(&mut self) {
+	pub fn clear_keys(&mut self) {
 		self.keys_just_pressed.clear();
 		self.keys_just_released.clear();
+		self.keys_pressed.clear();
 	}
 
 	pub fn bind_key(&mut self, key: char, action: Action) {
@@ -101,7 +102,7 @@ impl InputState {
 				actions.push(act.clone());
 			}
 		}
-		self.clear_press_states();
+		self.clear_keys();
 		actions
 	}
 }

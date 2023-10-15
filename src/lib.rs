@@ -11,10 +11,10 @@ mod raycast;
 mod rect_tools;
 mod systems;
 
-use std::collections::HashSet;
 use crate::input::*;
 use crate::components::*;
 use bevy_ecs::prelude::*;
+use bevy_ecs::system::SystemState;
 use crate::action::Action;
 use crate::color::RGB8;
 
@@ -29,7 +29,8 @@ pub enum GameMode {
 
 pub struct GameState {
 	ecs_world: World,
-	ecs_scheduler: Schedule,
+	update_schedule: Schedule,
+	redraw_schedule: Schedule, // Perhaps we can do these using the system 'run if'?
 	// Map is in resources.
 	input_state: InputState,
 }
@@ -54,14 +55,16 @@ impl GameState {
 		world.insert_resource::<systems::RenderedMap>(systems::RenderedMap::default());
 
 		// Set the run order for our systems:
-		let mut schedule = Schedule::default();
-		schedule.add_systems((
+		let mut update_schedule = Schedule::default();
+		update_schedule.add_systems((
 				systems::step_try_move,
 				systems::compute_viewshed,
-				systems::render_map,
 				systems::camera_follow
 			) //.run_if(step_world),
 		);
+		
+		let mut redraw_schedule = Schedule::default();
+		redraw_schedule.add_systems(systems::render_map);
 
 		// TODO: We are inserting the player.  Hack-ish.
 		let _player = world.spawn((
@@ -75,7 +78,8 @@ impl GameState {
 
 		GameState {
 			ecs_world: world,
-			ecs_scheduler: schedule,
+			update_schedule: update_schedule,
+			redraw_schedule: redraw_schedule,
 			input_state: keymap
 		}
 	}
@@ -113,12 +117,13 @@ impl GameState {
 				GameMode::Paused // TODO
 			},
 			GameMode::WorldTick => {
-				self.ecs_scheduler.run(&mut self.ecs_world); // We have to step the world so that the inputs will be registered.
+				self.update_schedule.run(&mut self.ecs_world); // We have to step the world so that the inputs will be registered.
 				GameMode::AwaitingPlayerAction
 			}
 		};
 		//self.ecs_world.get_resource::<GameMode>().expect("GameMode resource detached!? This can never happen.").as_ref()
 		*(self.ecs_world.get_resource_mut::<GameMode>().expect("Failed to get game mode!?").as_mut()) = next_game_mode;
+		self.redraw_schedule.run(&mut self.ecs_world);
 	}
 
 	pub fn save(&self) {
@@ -141,15 +146,18 @@ impl GameState {
 		if actions.is_empty() {
 			return GameMode::AwaitingPlayerAction;
 		}
+		// TODO: Use 'with' here to speed up the select.
+		let mut system_state: SystemState<(Commands, Query<(Entity, Option<&mut TryMove>, &Position, &PlayerControlled)>)> = SystemState::new(&mut self.ecs_world);
+		let (mut commands, mut query) = system_state.get_mut(&mut self.ecs_world);
 		for a in actions {
 			match a {
 				Action::Move(dx, dy) => {
-					for ((e, pos, maybe_trymove, _pc)) in self.ecs_world.query::<((Entity, &Position, Option<&mut TryMove>, &PlayerControlled))>().iter(&self.ecs_world) {
-						if let Some(mv) = maybe_trymove {
-							// Reuse component.
-							//mv.dx = dx;
-							//mv.dy = dy;
-							// TODO: Start here.  Immutable ref?  What?
+					for (e, maybe_trymove, _pos, _pc) in query.iter_mut() {
+						if let Some(mut tm) = maybe_trymove {
+							tm.dx = dx as i32;
+							tm.dy = dy as i32;
+						} else {
+							commands.entity(e).insert(TryMove { dx: dx as i32, dy: dy as i32, bonk: false });
 						}
 					}
 				},
@@ -158,6 +166,7 @@ impl GameState {
 				},
 			}
 		}
+		system_state.apply(&mut self.ecs_world);
 		return GameMode::WorldTick;
 	}
 }
