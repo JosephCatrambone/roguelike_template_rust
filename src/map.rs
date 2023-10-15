@@ -14,7 +14,6 @@ pub enum TileTypes {
 pub struct Room {
 }
 
-
 #[derive(Resource, Serialize, Deserialize)]
 pub struct Map {
 	width: u32,

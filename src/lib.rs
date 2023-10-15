@@ -58,11 +58,11 @@ impl GameState {
 		let mut update_schedule = Schedule::default();
 		update_schedule.add_systems((
 				systems::step_try_move,
-				systems::camera_follow,
 			) //.run_if(step_world),
 		);
 		
 		let mut redraw_schedule = Schedule::default();
+		redraw_schedule.add_systems(systems::camera_follow);
 		redraw_schedule.add_systems(systems::compute_viewshed);
 		redraw_schedule.add_systems(systems::render_map);
 
