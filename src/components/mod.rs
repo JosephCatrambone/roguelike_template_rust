@@ -84,6 +84,16 @@ pub struct Viewshed {
 	pub last_computed: Position, // If we change position we need to recompute this.
 }
 
+impl Viewshed {
+	pub fn new(sight_range: u32) -> Self {
+		Self {
+			visible_tiles: vec![],
+			last_computed: Position { x: 0, y: 0 },
+			range: sight_range,
+		}
+	}
+}
+
 #[derive(Clone, Component, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Stretchable {
 	pub base_size: f32,

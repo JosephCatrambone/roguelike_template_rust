@@ -4,6 +4,7 @@ mod action;
 mod camera;
 mod color;
 mod components;
+mod entities;
 mod gamelog;
 mod input;
 mod map;
@@ -11,13 +12,12 @@ mod raycast;
 mod rect_tools;
 mod systems;
 
-use crate::input::*;
-use crate::components::*;
 use bevy_ecs::prelude::*;
 use bevy_ecs::system::SystemState;
 use crate::action::Action;
 use crate::color::RGB8;
-
+use crate::components::*;
+use crate::input::*;
 
 #[derive(Copy, Clone, Resource, PartialEq, Hash)]
 pub enum GameMode {
@@ -72,7 +72,7 @@ impl GameState {
 			Player {},
 			PlayerControlled {},
 			BlocksTile {},
-			Viewshed { visible_tiles: vec![], range: 30, last_computed: Position { x: 0, y: 0 } },
+			Viewshed::new(40),
 			Renderable { codepoint: '@' as u32, fg_color: RGB8::new(0, 255, 128), bg_color: RGB8::new(0, 0, 0) },
 		));
 
