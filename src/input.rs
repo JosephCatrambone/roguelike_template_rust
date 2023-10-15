@@ -64,7 +64,11 @@ impl InputState {
 		}
 	}
 
-	pub fn reset_press_states(&mut self) {
+	pub fn any_keys_just_pressed(&self) -> bool {
+		!self.keys_just_pressed.is_empty()
+	}
+
+	pub fn clear_press_states(&mut self) {
 		self.keys_just_pressed.clear();
 		self.keys_just_released.clear();
 	}
@@ -76,26 +80,28 @@ impl InputState {
 		self.key_lookup.insert(action, key);
 	}
 
-	pub fn update_from_keys(&mut self, new_keys_down: &HashSet<char>) {
-		// Clear the old keys just pressed and released.
-		self.keys_just_pressed.clear();
-		self.keys_just_released.clear();
-		// Update pressed keys:
-		for k in new_keys_down.iter() {
-			if !self.keys_pressed.contains(k) {
-				self.keys_just_pressed.insert(*k);
-				self.keys_pressed.insert(*k);
+	pub fn handle_key_down(&mut self, key: char) {
+		if !self.keys_pressed.contains(&key) {
+			self.keys_just_pressed.insert(key);
+		}
+		self.keys_pressed.insert(key);
+	}
+
+	pub fn handle_key_up(&mut self, key: char) {
+		if self.keys_pressed.contains(&key) {
+			self.keys_just_released.insert(key);
+		}
+		self.keys_pressed.remove(&key);
+	}
+
+	pub fn pop_actions(&mut self) -> Vec<Action> {
+		let mut actions = vec![];
+		for k in &self.keys_just_pressed {
+			if let Some(act) = self.keymap.get(k) {
+				actions.push(act.clone());
 			}
 		}
-		// Update released keys:
-		for k in self.keys_pressed.iter() {
-			if !new_keys_down.contains(k) {
-				self.keys_just_released.insert(*k);
-			}
-		}
-		// And now clear the released.
-		for k in self.keys_just_released.iter() {
-			self.keys_pressed.remove(k);
-		}
+		self.clear_press_states();
+		actions
 	}
 }

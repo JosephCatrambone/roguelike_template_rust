@@ -28,8 +28,12 @@ async fn main() {
 	let mut font_settings = find_optimal_font_settings(TERMINAL_WIDTH, TERMINAL_HEIGHT, None);
 
 	loop {
+		// Input handling:
+		while let Some(c) = get_char_pressed() {
+			game.handle_key_down(c);
+		}
+
 		// Update:
-		update_inputs(&mut game);
 		game.update();
 
 		// Redraw:
@@ -102,13 +106,4 @@ fn find_optimal_font_settings(terminal_width: u32, terminal_height: u32, font: O
 		scanline_height: character_size.height,
 		horizontal_offset: (screen_width - rendered_width) * 0.5
 	}
-}
-
-fn update_inputs(game_state: &mut GameState) {
-	// TODO: This is a leaky hack.
-	let mut new_keys = HashSet::new();
-	while let Some(c) = get_char_pressed() {
-		new_keys.insert(c);
-	}
-	game_state.input(&new_keys);
 }
