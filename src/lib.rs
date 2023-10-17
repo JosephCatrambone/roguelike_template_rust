@@ -121,6 +121,7 @@ impl GameState {
 
 	// Thin wrappers:
 	pub fn handle_key_down(&mut self, key: char) {
+		println!("Keypress: {}", &key);
 		self.world.get_resource_mut::<InputState>().expect("Lost input state.").handle_key_down(key);
 	}
 
