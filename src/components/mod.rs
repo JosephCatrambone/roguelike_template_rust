@@ -1,6 +1,8 @@
 mod body;
+mod combat;
 mod items;
 pub use body::*;
+pub use combat::*;
 pub use items::*;
 
 use crate::color::RGB8;
@@ -37,6 +39,14 @@ impl Into<String> for Name {
 	}
 }
 
+
+#[derive(Copy, Clone, Component, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Initiative {
+	pub current: i32,
+}
+
+#[derive(Copy, Clone, Component, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct TurnActive;
 
 #[derive(Copy, Clone, Component, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Player;
@@ -94,6 +104,7 @@ impl Viewshed {
 	}
 }
 
+// Applies to clothing, equipment, contents.
 #[derive(Clone, Component, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Stretchable {
 	pub base_size: f32,

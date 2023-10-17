@@ -12,6 +12,7 @@ mod raycast;
 mod rect_tools;
 mod systems;
 
+use std::time::{Duration, Instant};
 use bevy_ecs::prelude::*;
 use bevy_ecs::system::SystemState;
 use crate::action::Action;
@@ -19,18 +20,23 @@ use crate::color::RGB8;
 use crate::components::*;
 use crate::input::*;
 
-#[derive(Copy, Clone, Resource, PartialEq, Hash)]
-pub enum GameMode {
-    Paused,
+#[derive(Copy, Clone, Resource, PartialEq, Hash, Eq)]
+pub enum RunState {
 	AwaitingPlayerAction,
 	AwaitingPlayerInventoryInput, // TODO: Perhaps we can do something fancier later.
-	WorldTick,
+	Ticking,
+}
+
+#[derive(Clone, Resource, PartialEq, Hash)]
+pub struct WorldTick {
+	tick: u64,
+	time_to_next_tick: Duration,
+	last_tick_time: Instant,
 }
 
 pub struct GameState {
 	world: World,
-	update_schedule: Schedule,
-	redraw_schedule: Schedule, // Perhaps we can do these using the system 'run if'?
+	schedule: Schedule,
 	// Map is in resources.
 	input_state: InputState,
 }
@@ -49,22 +55,22 @@ impl GameState {
 
 		// Insert all the resources:
 		world.insert_resource::<map::Map>(map::Map::new_random(600, 500, None));
-		world.insert_resource::<GameMode>(GameMode::Paused);
+		world.insert_resource::<RunState>(RunState::AwaitingPlayerAction);
+		world.insert_resource::<WorldTick>(WorldTick { tick: 0, time_to_next_tick: Duration::from_secs(2), last_tick_time: Instant::now() });
 		world.insert_resource::<gamelog::GameLog>(gamelog::GameLog::default());
 		world.insert_resource::<camera::Camera>(camera::Camera::new(300, 200, 80, 60));
 		world.insert_resource::<systems::RenderedMap>(systems::RenderedMap::default());
 
 		// Set the run order for our systems:
-		let mut update_schedule = Schedule::default();
-		update_schedule.add_systems((
+		let mut schedule = Schedule::default();
+		schedule.add_systems((
+				systems::update_initiative,
 				systems::step_try_move,
+				systems::camera_follow,
+				systems::compute_viewshed,
+				systems::render_map,
 			) //.run_if(step_world),
 		);
-		
-		let mut redraw_schedule = Schedule::default();
-		redraw_schedule.add_systems(systems::camera_follow);
-		redraw_schedule.add_systems(systems::compute_viewshed);
-		redraw_schedule.add_systems(systems::render_map);
 
 		// TODO: We are inserting the player.  Hack-ish.
 		let _player = world.spawn((
@@ -78,8 +84,7 @@ impl GameState {
 
 		GameState {
 			world,
-			update_schedule,
-			redraw_schedule,
+			schedule,
 			input_state: keymap
 		}
 	}
@@ -104,26 +109,22 @@ impl GameState {
 
 	pub fn update(&mut self) {
 		let current_game_mode = {
-			self.world.get_resource::<GameMode>().expect("GameMode resource detached!? This can never happen.").clone()
+			self.world.get_resource::<RunState>().expect("GameMode resource detached!? This can never happen.").clone()
 		};
 		let next_game_mode = match current_game_mode {
-			GameMode::Paused => {
-				GameMode::AwaitingPlayerAction
-			},
-			GameMode::AwaitingPlayerAction => {
+			RunState::AwaitingPlayerAction => {
 				self.handle_player_action()
 			},
-			GameMode::AwaitingPlayerInventoryInput => {
-				GameMode::Paused // TODO
+			RunState::AwaitingPlayerInventoryInput => {
+				RunState::AwaitingPlayerAction // TODO
 			},
-			GameMode::WorldTick => {
-				self.update_schedule.run(&mut self.world); // We have to step the world so that the inputs will be registered.
-				GameMode::AwaitingPlayerAction
+			RunState::Ticking => {
+				self.schedule.run(&mut self.world); // We have to step the world so that the inputs will be registered.
+				RunState::AwaitingPlayerAction
 			}
 		};
 		//self.ecs_world.get_resource::<GameMode>().expect("GameMode resource detached!? This can never happen.").as_ref()
-		*(self.world.get_resource_mut::<GameMode>().expect("Failed to get game mode!?").as_mut()) = next_game_mode;
-		self.redraw_schedule.run(&mut self.world);
+		*(self.world.get_resource_mut::<RunState>().expect("Failed to get game mode!?").as_mut()) = next_game_mode;
 	}
 
 	pub fn save(&self) {
@@ -141,10 +142,10 @@ impl GameState {
 		self.input_state.handle_key_up(key);
 	}
 
-	pub fn handle_player_action(&mut self) -> GameMode {
+	pub fn handle_player_action(&mut self) -> RunState {
 		let actions = self.input_state.pop_actions();
 		if actions.is_empty() {
-			return GameMode::AwaitingPlayerAction;
+			return RunState::AwaitingPlayerAction;
 		}
 		// TODO: Use 'with' here to speed up the select.
 		let mut system_state: SystemState<(Commands, Query<(Entity, Option<&mut TryMove>, &Position, &PlayerControlled)>)> = SystemState::new(&mut self.world);
@@ -167,6 +168,6 @@ impl GameState {
 			}
 		}
 		system_state.apply(&mut self.world);
-		return GameMode::WorldTick;
+		return RunState::Ticking;
 	}
 }

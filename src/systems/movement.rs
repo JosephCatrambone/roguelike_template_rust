@@ -1,6 +1,7 @@
 use crate::components::*;
 use crate::map::Map;
 use bevy_ecs::prelude::*;
+use crate::RunState;
 
 
 pub fn step_try_move(mut query: Query<(&mut Position, &mut TryMove)>, map: Res<Map>) {
@@ -18,4 +19,8 @@ pub fn step_try_move(mut query: Query<(&mut Position, &mut TryMove)>, map: Res<M
 		vel.dx = 0;
 		vel.dy = 0;
 	}
+}
+
+pub fn player_movement_input(mut commands: Commands, mut query: Query<(Entity, &mut Position, &mut TryMove), With<TurnActive>>, mut run: ResMut<RunState>) {
+
 }
