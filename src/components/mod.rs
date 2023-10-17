@@ -49,6 +49,9 @@ pub struct Initiative {
 pub struct TurnActive;
 
 #[derive(Copy, Clone, Component, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct AIRandomMovement;
+
+#[derive(Copy, Clone, Component, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Player;
 
 #[derive(Copy, Clone, Component, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]

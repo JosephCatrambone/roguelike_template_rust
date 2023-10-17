@@ -1,5 +1,6 @@
 
-// Rather than pub mod x so we have to do systems::x::whatever everywhere, just flatten by pub use.
+pub mod ai; // Pub mod rather than pub use so we namespace everything.
+
 mod body;
 pub use body::*;
 
