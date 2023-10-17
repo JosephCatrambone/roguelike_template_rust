@@ -38,22 +38,23 @@ pub struct GameState {
 	world: World,
 	schedule: Schedule,
 	// Map is in resources.
-	input_state: InputState,
+	// So is input_state.
 }
 
 impl GameState {
 	pub fn new() -> Self {
 		// Set up keymap:
-		let mut keymap = InputState::new();
-		keymap.bind_key('w', Action::Move(0, -1));
-		keymap.bind_key('a', Action::Move(-1, 0));
-		keymap.bind_key('s', Action::Move(0, 1));
-		keymap.bind_key('d', Action::Move(1, 0));
+		let mut input_state = InputState::new();
+		input_state.bind_key('w', Action::MoveUp);
+		input_state.bind_key('a', Action::MoveLeft);
+		input_state.bind_key('s', Action::MoveDown);
+		input_state.bind_key('d', Action::MoveRight);
 
 		// Setup world:
 		let mut world = World::default();
 
 		// Insert all the resources:
+		world.insert_resource::<InputState>(input_state);
 		world.insert_resource::<map::Map>(map::Map::new_random(600, 500, None));
 		world.insert_resource::<RunState>(RunState::AwaitingPlayerAction);
 		world.insert_resource::<WorldTick>(WorldTick { tick: 0, time_to_next_tick: Duration::from_secs(2), last_tick_time: Instant::now() });
@@ -65,6 +66,7 @@ impl GameState {
 		let mut schedule = Schedule::default();
 		schedule.add_systems((
 				systems::update_initiative,
+				systems::player_movement_input,
 				systems::step_try_move,
 				systems::camera_follow,
 				systems::compute_viewshed,
@@ -78,6 +80,7 @@ impl GameState {
 			Player {},
 			PlayerControlled {},
 			BlocksTile {},
+			Initiative { current: 0 },
 			Viewshed::new(40),
 			Renderable { codepoint: '@' as u32, fg_color: RGB8::new(0, 255, 128), bg_color: RGB8::new(0, 0, 0) },
 		));
@@ -85,7 +88,6 @@ impl GameState {
 		GameState {
 			world,
 			schedule,
-			input_state: keymap
 		}
 	}
 
@@ -108,23 +110,7 @@ impl GameState {
 	}
 
 	pub fn update(&mut self) {
-		let current_game_mode = {
-			self.world.get_resource::<RunState>().expect("GameMode resource detached!? This can never happen.").clone()
-		};
-		let next_game_mode = match current_game_mode {
-			RunState::AwaitingPlayerAction => {
-				self.handle_player_action()
-			},
-			RunState::AwaitingPlayerInventoryInput => {
-				RunState::AwaitingPlayerAction // TODO
-			},
-			RunState::Ticking => {
-				self.schedule.run(&mut self.world); // We have to step the world so that the inputs will be registered.
-				RunState::AwaitingPlayerAction
-			}
-		};
-		//self.ecs_world.get_resource::<GameMode>().expect("GameMode resource detached!? This can never happen.").as_ref()
-		*(self.world.get_resource_mut::<RunState>().expect("Failed to get game mode!?").as_mut()) = next_game_mode;
+		self.schedule.run(&mut self.world); // We have to step the world so that the inputs will be registered.
 	}
 
 	pub fn save(&self) {
@@ -135,39 +121,20 @@ impl GameState {
 
 	// Thin wrappers:
 	pub fn handle_key_down(&mut self, key: char) {
-		self.input_state.handle_key_down(key);
+		self.world.get_resource_mut::<InputState>().expect("Lost input state.").handle_key_down(key);
 	}
 
 	pub fn handle_key_up(&mut self, key: char) {
-		self.input_state.handle_key_up(key);
+		self.world.get_resource_mut::<InputState>().expect("Lost input state.").handle_key_up(key);
 	}
 
-	pub fn handle_player_action(&mut self) -> RunState {
-		let actions = self.input_state.pop_actions();
-		if actions.is_empty() {
-			return RunState::AwaitingPlayerAction;
-		}
-		// TODO: Use 'with' here to speed up the select.
-		let mut system_state: SystemState<(Commands, Query<(Entity, Option<&mut TryMove>, &Position, &PlayerControlled)>)> = SystemState::new(&mut self.world);
-		let (mut commands, mut query) = system_state.get_mut(&mut self.world);
-		for a in actions {
-			match a {
-				Action::Move(dx, dy) => {
-					for (e, maybe_trymove, _pos, _pc) in query.iter_mut() {
-						if let Some(mut tm) = maybe_trymove {
-							tm.dx = dx as i32;
-							tm.dy = dy as i32;
-						} else {
-							commands.entity(e).insert(TryMove { dx: dx as i32, dy: dy as i32, bonk: false });
-						}
-					}
-				},
-				Action::Macro(ops) => {
+	/*
+	let mut system_state: SystemState<(Commands, Query<(Entity, Option<&mut TryMove>, &Position, &PlayerControlled)>)> = SystemState::new(&mut self.world);
+	let (mut commands, mut query) = system_state.get_mut(&mut self.world);
+	for (e, maybe_trymove, _pos, _pc) in query.iter_mut() { ...
+	commands.entity(e).insert(TryMove { dx: dx as i32, dy: dy as i32, bonk: false });
 
-				},
-			}
-		}
-		system_state.apply(&mut self.world);
-		return RunState::Ticking;
-	}
+	system_state.apply(&mut self.world);
+	*/
+
 }
