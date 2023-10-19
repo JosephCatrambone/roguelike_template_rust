@@ -1,3 +1,4 @@
+pub mod ai;
 mod body;
 mod combat;
 mod items;
@@ -49,9 +50,6 @@ pub struct Initiative {
 pub struct TurnActive;
 
 #[derive(Copy, Clone, Component, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct AIRandomMovement;
-
-#[derive(Copy, Clone, Component, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Player;
 
 #[derive(Copy, Clone, Component, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -65,10 +63,15 @@ pub struct Position {
 
 #[derive(Clone, Copy, Component, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TryMove {
-	pub dx: i32, // Will get reset to zero after the move attempt.
+	pub dx: i32,
 	pub dy: i32,
-	pub bonk: bool, // True if the last move attempt failed.
 }
+
+#[derive(Clone, Copy, Component, Debug, PartialEq, Serialize, Deserialize)]
+pub struct MoveFailed;
+
+#[derive(Clone, Copy, Component, Debug, PartialEq, Serialize, Deserialize)]
+pub struct MoveSucceeded;
 
 #[derive(Clone, Copy, Component, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BlocksTile; // Cannot overlap with anything that has this component.

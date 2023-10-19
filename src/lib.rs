@@ -67,6 +67,7 @@ impl GameState {
 		schedule.add_systems((
 				systems::update_initiative,
 				systems::player_movement_input,
+				systems::ai::npc_thinking,
 				systems::step_try_move,
 				systems::camera_follow,
 				systems::compute_viewshed,
@@ -83,6 +84,13 @@ impl GameState {
 			Initiative { current: 0 },
 			Viewshed::new(40),
 			Renderable { codepoint: '@' as u32, fg_color: RGB8::new(0, 255, 128), bg_color: RGB8::new(0, 0, 0) },
+		));
+
+		let _rando = world.spawn((
+			Position { x: 9, y: 7 },
+			ai::NPC::default(),
+			Initiative { current: 2 },
+			Renderable { codepoint: 'A' as u32, fg_color: RGB8::new(150, 150, 0), bg_color: RGB8::new(0, 0, 0) },
 		));
 
 		GameState {

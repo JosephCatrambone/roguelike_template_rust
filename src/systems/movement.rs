@@ -7,24 +7,37 @@ use crate::RunState;
 
 const MOVEMENT_INITIATIVE_COST: i32 = 5;
 
-pub fn step_try_move(mut query: Query<(&mut Position, &mut TryMove)>, map: Res<Map>) {
-	for (mut pos, mut vel) in query.iter_mut() {
+pub fn step_try_move(mut commands: Commands, mut query: Query<(Entity, &mut Position, &mut TryMove, &mut Initiative), With<TurnActive>>, map: Res<Map>) {
+	for (e, mut pos, mut vel, mut initiative) in query.iter_mut() {
 		let old_x = pos.x;
 		let old_y = pos.y;
+		if vel.dx == 0 && vel.dy == 0 {
+			// If this entity is not moving then don't burn the action on it.
+			commands.entity(e)
+				.remove::<TryMove>()
+				.remove::<MoveFailed>()
+				.remove::<MoveSucceeded>();
+			continue;
+		}
 		pos.x = pos.x.saturating_add_signed(vel.dx);
 		pos.y = pos.y.saturating_add_signed(vel.dy);
-		vel.bonk = false;
 		if !map.tile_open(pos.x, pos.y) {
 			pos.x = old_x;
 			pos.y = old_y;
-			vel.bonk = true;
+			commands.entity(e)
+				.insert(MoveFailed)
+				.remove::<MoveFailed>();
 		}
 		vel.dx = 0;
 		vel.dy = 0;
+		commands.entity(e)
+			.remove::<TurnActive>()
+			.insert(MoveSucceeded);
+		initiative.current += MOVEMENT_INITIATIVE_COST;
 	}
 }
 
-pub fn player_movement_input(mut commands: Commands, mut query: Query<(Entity, &mut Position, Option<&mut TryMove>, &mut Initiative), With<TurnActive>>, mut run: ResMut<RunState>, mut input_state: ResMut<InputState>) {
+pub fn player_movement_input(mut commands: Commands, mut query: Query<(Entity, &mut Position, Option<&mut TryMove>), With<PlayerControlled>>, mut run: ResMut<RunState>, mut input_state: ResMut<InputState>) {
 	if run.as_ref() != &RunState::AwaitingPlayerAction {
 		// Early out.  Not our turn for inputs yet.
 		return;
@@ -36,16 +49,14 @@ pub fn player_movement_input(mut commands: Commands, mut query: Query<(Entity, &
 	if dx != 0 || dy != 0 {
 		input_state.clear_keys();
 		*run = RunState::Ticking;
-		println!("Movement!");
-		for (e, pos, trymove, mut initiative) in query.iter_mut() {
+		for (e, pos, trymove) in query.iter_mut() {
 			if let Some(mut tm) = trymove {
 				tm.dx = dx;
 				tm.dy = dy;
 			} else {
-				commands.entity(e).insert(TryMove { dx, dy, bonk: false });
+				commands.entity(e).insert(TryMove { dx, dy });
 			}
-			commands.entity(e).remove::<TurnActive>();
-			initiative.current += MOVEMENT_INITIATIVE_COST;
+
 		}
 	}
 }
