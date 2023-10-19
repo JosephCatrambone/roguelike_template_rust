@@ -36,6 +36,7 @@ pub fn player_movement_input(mut commands: Commands, mut query: Query<(Entity, &
 	if dx != 0 || dy != 0 {
 		input_state.clear_keys();
 		*run = RunState::Ticking;
+		println!("Movement!");
 		for (e, pos, trymove, mut initiative) in query.iter_mut() {
 			if let Some(mut tm) = trymove {
 				tm.dx = dx;

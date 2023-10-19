@@ -8,14 +8,29 @@ edition = "2021"
 [[bin]]
 name = "maingame"
 path = "src/main_gui.rs"
+required-features = ["build-gui"]
+
+[[bin]]
+name = "maingame_cli"
+path = "src/main_tui.rs"
+required-features = ["build-cli"]
 
 [dependencies]
+anyhow = "1.0"
 bevy_ecs = "~0.11"
-macroquad="~0.4"
 #glam = "~0.24"
 rand = "~0.8"
 serde= { version = "~1.0", features = ["derive"] }
 serde_json = "~1.0"
+
+# Per-binary builds.  There's not much of an alternative for Cargo in 2023.
+macroquad = { version = "~0.4", optional = true }
+crossterm = { version = "~0.26", optional = true }
+
+[features]
+build-cli = ["crossterm", ]
+build-gui = ["macroquad", ]
+
 
 # rustup target install wasm32-unknown-unknown
 # cargo install wasm-server-runner

@@ -98,6 +98,7 @@ impl InputState {
 	pub fn pop_actions(&mut self) -> Vec<Action> {
 		let mut actions = vec![];
 		for k in &self.keys_just_pressed {
+			println!("boop");
 			if let Some(act) = self.keymap.get(k) {
 				actions.push(act.clone());
 			}
