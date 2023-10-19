@@ -5,10 +5,8 @@ use crate::action::Action;
 use crate::input::InputState;
 use crate::RunState;
 
-const MOVEMENT_INITIATIVE_COST: i32 = 5;
-
-pub fn step_try_move(mut commands: Commands, mut query: Query<(Entity, &mut Position, &mut TryMove, &mut Initiative), With<TurnActive>>, map: Res<Map>) {
-	for (e, mut pos, mut vel, mut initiative) in query.iter_mut() {
+pub fn step_try_move(mut commands: Commands, mut query: Query<(Entity, &mut Position, &mut TryMove), With<TurnActive>>, map: Res<Map>) {
+	for (e, mut pos, mut vel) in query.iter_mut() {
 		let old_x = pos.x;
 		let old_y = pos.y;
 		if vel.dx == 0 && vel.dy == 0 {
@@ -33,7 +31,6 @@ pub fn step_try_move(mut commands: Commands, mut query: Query<(Entity, &mut Posi
 		commands.entity(e)
 			.remove::<TurnActive>()
 			.insert(MoveSucceeded);
-		initiative.current += MOVEMENT_INITIATIVE_COST;
 	}
 }
 

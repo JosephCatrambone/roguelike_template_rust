@@ -1,10 +1,12 @@
 use std::time::{Duration, Instant};
 use bevy_ecs::prelude::*;
+use rand::{RngCore, thread_rng};
 
 use crate::components::{Initiative, TurnActive, PlayerControlled};
 use crate::{RunState, WorldTick};
 
 const SOFT_REALTIME: bool = false;
+const MAX_RANDOM_INITIATIVE: u32 = 5;
 
 pub fn update_initiative(mut commands: Commands, mut query: Query<(Entity, &mut Initiative, Option<&PlayerControlled>)>, mut run_state: ResMut<RunState>, mut world_tick: ResMut<WorldTick>) {
 	if SOFT_REALTIME {
@@ -27,13 +29,16 @@ pub fn update_initiative(mut commands: Commands, mut query: Query<(Entity, &mut 
 	}
 
 	// Otherwise we have to tick and update the things like initiative.
+	let mut rng = thread_rng();
 	for (e, mut init, maybe_pc) in query.iter_mut() {
 		init.current -= 1;
 		if init.current <= 0 {
-			commands.entity(e).insert(TurnActive);
+			init.current += (rng.next_u32() % MAX_RANDOM_INITIATIVE) as i32;
+			commands.entity(e).insert(TurnActive); // Make active and bump our initiative!
 			if maybe_pc.is_some() {
 				*run_state = RunState::AwaitingPlayerAction;
 			}
 		}
+		// TODO: Pop any superfluous TurnActives?
 	}
 }
