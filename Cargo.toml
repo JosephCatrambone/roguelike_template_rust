@@ -6,20 +6,24 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [[bin]]
-name = "maingame"
+name = "main_gui"
 path = "src/main_gui.rs"
-required-features = ["build-gui"]
+required-features = ["build_gui"]
 
 [[bin]]
-name = "maingame_cli"
+name = "main_cli"
 path = "src/main_tui.rs"
-required-features = ["build-cli"]
+required-features = ["build_cli"]
 
 [dependencies]
 anyhow = "1.0"
 bevy_ecs = "~0.11"
+candle-core = "~0.3"
+candle-nn = "~0.3"
+candle-transformers = "~0.3"
 #glam = "~0.24"
 rand = "~0.8"
+safetensors = "*"
 serde= { version = "~1.0", features = ["derive"] }
 serde_json = "~1.0"
 
@@ -28,8 +32,8 @@ macroquad = { version = "~0.4", optional = true }
 crossterm = { version = "~0.26", optional = true }
 
 [features]
-build-cli = ["crossterm", ]
-build-gui = ["macroquad", ]
+build_cli = ["crossterm", ]
+build_gui = ["macroquad", ]
 
 
 # rustup target install wasm32-unknown-unknown

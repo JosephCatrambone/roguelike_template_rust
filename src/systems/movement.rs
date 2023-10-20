@@ -41,8 +41,8 @@ pub fn player_movement_input(mut commands: Commands, mut query: Query<(Entity, &
 	}
 
 	// If it _IS_ our turn now...
-	let dy = if input_state.is_action_pressed(Action::MoveUp) { -1 } else if input_state.is_action_pressed(Action::MoveDown) { 1 } else { 0 };
-	let dx = if input_state.is_action_pressed(Action::MoveLeft) { -1 } else if input_state.is_action_pressed(Action::MoveRight) { 1 } else { 0 };
+	let dy = if input_state.is_action_just_pressed(Action::MoveUp) { -1 } else if input_state.is_action_just_pressed(Action::MoveDown) { 1 } else { 0 };
+	let dx = if input_state.is_action_just_pressed(Action::MoveLeft) { -1 } else if input_state.is_action_just_pressed(Action::MoveRight) { 1 } else { 0 };
 	if dx != 0 || dy != 0 {
 		input_state.clear_keys();
 		*run = RunState::Ticking;
@@ -53,7 +53,6 @@ pub fn player_movement_input(mut commands: Commands, mut query: Query<(Entity, &
 			} else {
 				commands.entity(e).insert(TryMove { dx, dy });
 			}
-
 		}
 	}
 }

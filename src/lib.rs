@@ -20,14 +20,14 @@ use crate::color::RGB8;
 use crate::components::*;
 use crate::input::*;
 
-#[derive(Copy, Clone, Resource, PartialEq, Hash, Eq)]
+#[derive(Copy, Clone, Debug, Resource, PartialEq, Hash, Eq)]
 pub enum RunState {
 	AwaitingPlayerAction,
 	AwaitingPlayerInventoryInput, // TODO: Perhaps we can do something fancier later.
 	Ticking,
 }
 
-#[derive(Clone, Resource, PartialEq, Hash)]
+#[derive(Clone, Debug, Resource, PartialEq, Hash)]
 pub struct WorldTick {
 	tick: u64,
 	time_to_next_tick: Duration,
@@ -118,7 +118,15 @@ impl GameState {
 	}
 
 	pub fn update(&mut self) {
+		let start_state = self.world.get_resource::<RunState>().unwrap().clone();
 		self.schedule.run(&mut self.world); // We have to step the world so that the inputs will be registered.
+		let end_state = self.world.get_resource::<RunState>().unwrap().clone();
+
+		if start_state == RunState::AwaitingPlayerAction && end_state != RunState::AwaitingPlayerAction {
+			// We processed the inputs!  Clear them.
+			let mut inputs = self.world.get_resource_mut::<InputState>().unwrap();
+			inputs.clear_keys();
+		}
 	}
 
 	pub fn save(&self) {
