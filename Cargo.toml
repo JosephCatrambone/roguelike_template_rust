@@ -12,7 +12,7 @@ required-features = ["build_gui"]
 
 [[bin]]
 name = "main_cli"
-path = "src/main_tui.rs"
+path = "src/main_cli.rs"
 required-features = ["build_cli"]
 
 [dependencies]
