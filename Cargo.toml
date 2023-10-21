@@ -29,7 +29,7 @@ serde_json = "~1.0"
 
 # Per-binary builds.  There's not much of an alternative for Cargo in 2023.
 macroquad = { version = "~0.4", optional = true }
-crossterm = { version = "~0.26", optional = true }
+crossterm = { version = "~0.27", optional = true }
 
 [features]
 build_cli = ["crossterm", ]

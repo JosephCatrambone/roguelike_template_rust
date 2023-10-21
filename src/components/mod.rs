@@ -109,16 +109,3 @@ impl Viewshed {
 		}
 	}
 }
-
-// Applies to clothing, equipment, contents.
-#[derive(Clone, Component, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Stretchable {
-	pub base_size: f32,
-	pub current_stretch_percent: f32,
-	pub max_stretch_percent: f32
-}
-
-
-
-
-

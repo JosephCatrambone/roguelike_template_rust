@@ -1,9 +1,8 @@
 use anyhow::Result;
 use crossterm::{
-	QueueableCommand, ExecutableCommand, Result as CTResult,
+	QueueableCommand, ExecutableCommand,
 	cursor,
-	execute,
-	style::{self, Color, Colors, Print, ResetColor, SetBackgroundColor, SetForegroundColor, SetColors, Stylize, Attribute, SetAttribute},
+	style::{Color, Colors, Print, ResetColor, SetColors, Attribute, SetAttribute},
 	event::{poll, read, Event, KeyCode},
 	terminal,
 };

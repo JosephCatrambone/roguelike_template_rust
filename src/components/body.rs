@@ -21,5 +21,5 @@ pub struct BodyPart {
 
 #[derive(Clone, Component, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Metabolism {
-	
+	hunger_clock: i32,
 }
