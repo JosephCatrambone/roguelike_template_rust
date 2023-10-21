@@ -22,12 +22,11 @@ pub const MAP_VIEW_HEIGHT: u32 = 40;
 
 
 fn main() -> Result<()> {
-	let mut stdout = stdout();
-	let mut out = Arc::new(Mutex::new(stdout));
+	let out = Arc::new(Mutex::new(stdout()));
 	let mut game = GameState::new();
 	game.set_camera_viewport_size(MAP_VIEW_WIDTH, MAP_VIEW_HEIGHT);
 
-	terminal::enable_raw_mode();
+	terminal::enable_raw_mode()?;
 	out.lock().unwrap().execute(terminal::EnterAlternateScreen)?;
 	out.lock().unwrap().execute(cursor::Hide)?;
 	out.lock().unwrap().queue(terminal::Clear(terminal::ClearType::All))?;
@@ -41,7 +40,7 @@ fn main() -> Result<()> {
 				Event::Key(key_event) => {
 					match key_event.code {
 						KeyCode::Enter => {},
-						KeyCode::F(num) => {},
+						KeyCode::F(_num) => {},
 						KeyCode::Esc => {
 							break;
 						},
@@ -52,9 +51,9 @@ fn main() -> Result<()> {
 						_ => {}
 					}
 				},
-				Event::Mouse(event) => {},
-				Event::Paste(data) => {},
-				Event::Resize(width, height) => {},
+				Event::Mouse(_event) => {},
+				Event::Paste(_data) => {},
+				Event::Resize(_width, _height) => {},
 			}
 		}
 
@@ -63,7 +62,7 @@ fn main() -> Result<()> {
 
 		// Check for display changes:
 		{
-			let mut out = Arc::clone(&out);
+			let out = Arc::clone(&out);
 			game.with_rendered_map_data(|data|{
 				let mut out = out.lock().unwrap();
 				for y in 0..data.get_height() {
@@ -89,7 +88,7 @@ fn main() -> Result<()> {
 	out.lock().unwrap().execute(terminal::Clear(terminal::ClearType::All))?;
 	out.lock().unwrap().execute(cursor::Show)?;
 	out.lock().unwrap().execute(terminal::LeaveAlternateScreen)?;
-	terminal::disable_raw_mode();
+	terminal::disable_raw_mode().unwrap();
 	Ok(())
 }
 

@@ -107,7 +107,7 @@ pub fn render_map(query: Query<(&Position, &Renderable)>, map: Res<Map>, camera:
 	for (pos, render) in query.iter() {
 		let x = pos.x;
 		let y = pos.y;
-		if x >= left && x < right && y >= top && y < bottom {
+		if x >= left && x < right && y >= top && y < bottom && map.is_visible(x, y) {
 			let render_t: &mut RenderedMapTile = rendered_map_data.get_tile_mut(x - left, y - top);
 			render_t.code_point = render.codepoint;
 			render_t.fg_color = render.fg_color;
