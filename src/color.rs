@@ -1,6 +1,7 @@
+use bevy_reflect::Reflect;
 use serde::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, PartialEq, Reflect, Serialize, Deserialize)]
 pub struct RGB8 {
 	pub r: u8,
 	pub g: u8,

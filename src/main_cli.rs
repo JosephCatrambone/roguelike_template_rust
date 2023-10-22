@@ -6,8 +6,7 @@ use crossterm::{
 	event::{poll, read, Event, KeyCode},
 	terminal,
 };
-use hroguelike::*;
-use std::collections::HashSet;
+use roguelike_template_rust::*;
 use std::default::Default;
 use std::io::{stdout, Write};
 use std::sync::{Arc, Mutex};

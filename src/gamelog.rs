@@ -1,8 +1,7 @@
 use bevy_ecs::prelude::*;
-use serde::{Deserialize, Serialize};
 use crate::components::Position;
 
-#[derive(Default, Resource, Serialize, Deserialize)]
+#[derive(Default, Resource)]
 pub struct GameLog {
 	logs: Vec<LogEntry>,
 	last_read: usize, // What was the last accessed item?
@@ -25,7 +24,7 @@ impl GameLog {
 	}
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct LogEntry {
 	pub text: String,
 	pub importance: f32, // 0 is default importance.  Lower is less relevant to the player.  Higher is more relevant.

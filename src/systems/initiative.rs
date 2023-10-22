@@ -36,7 +36,7 @@ pub fn update_initiative(mut commands: Commands, mut query: Query<(Entity, &mut 
 			init.current += (rng.next_u32() % MAX_RANDOM_INITIATIVE) as i32;
 			commands.entity(e).insert(TurnActive); // Make active and bump our initiative!
 			if maybe_pc.is_some() {
-				*run_state = RunState::AwaitingPlayerAction;
+				*run_state = RunState::AwaitingPlayerInput;
 			}
 		}
 		// TODO: Pop any superfluous TurnActives?

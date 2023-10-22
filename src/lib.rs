@@ -10,20 +10,27 @@ mod input;
 mod map;
 mod raycast;
 mod rect_tools;
+mod saveload;
 mod systems;
 
-use std::time::{Duration, Instant};
 use bevy_ecs::prelude::*;
 use bevy_ecs::system::SystemState;
+use bevy_reflect::prelude::*;
 use crate::action::Action;
 use crate::color::RGB8;
 use crate::components::*;
 use crate::input::*;
+use serde::{Serialize, Deserialize};
+use std::time::{Duration, Instant};
 
 #[derive(Copy, Clone, Debug, Resource, PartialEq, Hash, Eq)]
 pub enum RunState {
-	AwaitingPlayerAction,
+	AwaitingPlayerInput,
 	AwaitingPlayerInventoryInput, // TODO: Perhaps we can do something fancier later.
+	GenerateMap,
+	Menu, // Menu stack pending.
+	Saving,
+	Loading,
 	Ticking,
 }
 
@@ -35,28 +42,30 @@ pub struct WorldTick {
 }
 
 pub struct GameState {
+	input_state: InputState,
 	world: World,
 	schedule: Schedule,
 	// Map is in resources.
-	// So is input_state.
 }
 
 impl GameState {
 	pub fn new() -> Self {
 		// Set up keymap:
 		let mut input_state = InputState::new();
-		input_state.bind_key('w', Action::MoveUp);
-		input_state.bind_key('a', Action::MoveLeft);
-		input_state.bind_key('s', Action::MoveDown);
-		input_state.bind_key('d', Action::MoveRight);
+		input_state.bind_key('w', Action::Move(0, -1));
+		input_state.bind_key('a', Action::Move(-1, 0));
+		input_state.bind_key('s', Action::Move(0, 1));
+		input_state.bind_key('d', Action::Move(1, 0));
+		input_state.bind_key('c', Action::Save);
+		input_state.bind_key('v', Action::Load);
 
 		// Setup world:
 		let mut world = World::default();
 
 		// Insert all the resources:
-		world.insert_resource::<InputState>(input_state);
+		world.init_resource::<AppTypeRegistry>(); // For saving.
 		world.insert_resource::<map::Map>(map::Map::new_random(600, 500, None));
-		world.insert_resource::<RunState>(RunState::AwaitingPlayerAction);
+		world.insert_resource::<RunState>(RunState::Ticking);
 		world.insert_resource::<WorldTick>(WorldTick { tick: 0, time_to_next_tick: Duration::from_secs(2), last_tick_time: Instant::now() });
 		world.insert_resource::<gamelog::GameLog>(gamelog::GameLog::default());
 		world.insert_resource::<camera::Camera>(camera::Camera::new(300, 200, 80, 60));
@@ -66,7 +75,6 @@ impl GameState {
 		let mut schedule = Schedule::default();
 		schedule.add_systems((
 				systems::update_initiative,
-				systems::player_movement_input,
 				systems::ai::npc_thinking,
 				systems::step_try_move,
 				systems::camera_follow,
@@ -94,6 +102,7 @@ impl GameState {
 		));
 
 		GameState {
+			input_state,
 			world,
 			schedule,
 		}
@@ -112,44 +121,77 @@ impl GameState {
 		}
 	}
 
+	fn get_run_state(&self) -> RunState {
+		self.world.get_resource::<RunState>().unwrap().clone()
+	}
+
+	fn set_run_state(&mut self, new_state: RunState) {
+		let mut runstate = self.world.get_resource_mut::<RunState>().unwrap();
+		*runstate = new_state;
+	}
+
 	pub fn with_rendered_map_data(&self, render_fn: impl Fn(&systems::RenderedMap) -> ()) {
 		let map_data = self.world.get_resource::<systems::RenderedMap>().unwrap();
 		render_fn(&map_data);
 	}
 
 	pub fn update(&mut self) {
-		let start_state = self.world.get_resource::<RunState>().unwrap().clone();
+		//let start_state = self.world.get_resource::<RunState>().unwrap().clone();
+		self.process_player_inputs();
 		self.schedule.run(&mut self.world); // We have to step the world so that the inputs will be registered.
-		let end_state = self.world.get_resource::<RunState>().unwrap().clone();
-
-		if start_state == RunState::AwaitingPlayerAction && end_state != RunState::AwaitingPlayerAction {
-			// We processed the inputs!  Clear them.
-			let mut inputs = self.world.get_resource_mut::<InputState>().unwrap();
-			inputs.clear_keys();
-		}
 	}
 
-	pub fn save(&self) {
-	}
-
-	pub fn load(&mut self) {
-	}
-
-	// Thin wrappers:
 	pub fn handle_key_down(&mut self, key: char) {
-		self.world.get_resource_mut::<InputState>().expect("Lost input state.").handle_key_down(key);
+		// 27, 8, 13
+		// Esc, backspace, return.
+		self.input_state.handle_key_down(key);
 	}
 
 	pub fn handle_key_up(&mut self, key: char) {
-		self.world.get_resource_mut::<InputState>().expect("Lost input state.").handle_key_up(key);
+		self.input_state.handle_key_up(key);
 	}
 
-	/*
-	let mut system_state: SystemState<(Commands, Query<(Entity, Option<&mut TryMove>, &Position, &PlayerControlled)>)> = SystemState::new(&mut self.world);
-	let (mut commands, mut query) = system_state.get_mut(&mut self.world);
-	for (e, maybe_trymove, _pos, _pc) in query.iter_mut() { ...
-	commands.entity(e).insert(TryMove { dx: dx as i32, dy: dy as i32, bonk: false });
+	pub fn process_player_inputs(&mut self) {
+		let old_run_state = self.get_run_state();
+		if old_run_state == RunState::Ticking {
+			return;
+		}
 
-	system_state.apply(&mut self.world);
-	*/
+		let mut new_run_state: Option<RunState> = None;
+		if old_run_state == RunState::AwaitingPlayerInput {
+			// We may get multiple actions but we can only process one if it's the player's turn.
+			let player_actions = self.input_state.pop_all_actions();
+			if let Some(action) = player_actions.first() {
+				match action {
+					Action::Move(dx, dy) => {
+						let dx = dx.clone();
+						let dy = dy.clone();
+						let mut system_state: SystemState<(Commands, Query<(Entity, Option<&mut TryMove>, &Position, &PlayerControlled)>)> = SystemState::new(&mut self.world);
+						let (mut commands, mut query) = system_state.get_mut(&mut self.world);
+						self.input_state.clear_keys();
+						for (e, trymove, _pos, _pc) in query.iter_mut() {
+							if let Some(mut tm) = trymove {
+								tm.dx = dx;
+								tm.dy = dy;
+							} else {
+								commands.entity(e).insert(TryMove { dx, dy });
+							}
+							new_run_state = Some(RunState::Ticking);
+						}
+						system_state.apply(&mut self.world);
+					},
+					Action::Save => {
+						println!("{}", saveload::save(&mut self.world));
+					}
+					_ => {}
+				}
+			}
+		}
+
+		// We may have taken an action.  We may not have.
+		if let Some(new_state) = new_run_state {
+			self.set_run_state(new_state);
+		}
+	}
+
 }

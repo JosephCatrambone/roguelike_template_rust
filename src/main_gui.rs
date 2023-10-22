@@ -1,4 +1,4 @@
-use hroguelike::*;
+use roguelike_template_rust::*;
 use macroquad::miniquad::window::screen_size;
 use macroquad::prelude::*;
 use std::collections::HashSet;
